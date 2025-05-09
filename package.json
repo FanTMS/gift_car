@@ -30,12 +30,14 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "CI=false react-scripts build",
+    "build:netlify": "node remove-unused.js && CI=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "node server.js",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
-    "deploy": "npm run build && npm run serve"
+    "deploy": "npm run build && npm run serve",
+    "fix:unused": "node remove-unused.js"
   },
   "eslintConfig": {
     "extends": [
