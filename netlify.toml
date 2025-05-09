@@ -4,6 +4,10 @@
 
 [build.environment]
   CI = "false"
+  DISABLE_ESLINT_PLUGIN = "true"
+
+[[plugins]]
+  package = "./.netlify/netlify-plugin-skip-eslint"
 
 # Правила для всех маршрутов
 [[redirects]]
