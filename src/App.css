@@ -512,3 +512,106 @@ main {
   color: var(--tg-theme-text-color, #ffffff);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
+
+/* Глобальные переменные */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --app-height: 100%;
+}
+
+/* Глобальные стили для мобильной адаптации */
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  height: -webkit-fill-available;
+  overflow: hidden;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+  height: 100vh;
+  height: var(--app-height);
+  height: -webkit-fill-available;
+  width: 100vw;
+  position: fixed;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Запрет масштабирования на iOS */
+@supports (-webkit-touch-callout: none) {
+  * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+/* Фиксы для мобильных браузеров */
+@media (max-width: 768px) {
+  /* Исправление проблемы с 100vh в мобильных браузерах */
+  .full-height {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  /* Скрытие адресной строки в iOS */
+  .ios-fix {
+    padding-top: var(--safe-area-top);
+    padding-bottom: var(--safe-area-bottom);
+    padding-left: var(--safe-area-left);
+    padding-right: var(--safe-area-right);
+  }
+  
+  /* Устранение резиновой прокрутки */
+  .no-bounce {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Предотвращение случайных нажатий */
+  .prevent-touch-callout {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Стили для кнопок */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Скрытие вертикальной прокрутки с сохранением функциональности */
+.scrollable {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.scrollable::-webkit-scrollbar {
+  display: none;
+}

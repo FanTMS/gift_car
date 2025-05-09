@@ -19,6 +19,7 @@ import SettingsPage from './pages/SettingsPage';
 import SuperAdminPage from './pages/admin/SuperAdminPage';
 import { initializeTelegramApp, applyTelegramStyles } from './utils/telegramUtils';
 import './App.css';
+import CssBaseline from '@mui/material/CssBaseline';
 
 function App() {
   useEffect(() => {
@@ -30,12 +31,61 @@ function App() {
       // Применяем стили Telegram к приложению
       applyTelegramStyles();
     }
+
+    // Предотвращение жестов масштабирования
+    const preventZoom = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    // Блокировка двойного тапа для зума
+    let lastTouchEnd = 0;
+    const preventDoubleTapZoom = (e: TouchEvent) => {
+      const now = new Date().getTime();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    };
+
+    // Запрет на скролл body
+    const preventBodyScroll = () => {
+      document.body.addEventListener('touchmove', (e) => {
+        if (e.target === document.body) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+    };
+
+    // Добавляем обработчики событий
+    document.addEventListener('touchstart', preventZoom, { passive: false });
+    document.addEventListener('touchend', preventDoubleTapZoom, { passive: false });
+    preventBodyScroll();
+
+    // Фиксируем высоту для мобильных устройств
+    const setMobileHeight = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // Вызываем при загрузке и изменении размера
+    setMobileHeight();
+    window.addEventListener('resize', setMobileHeight);
+
+    return () => {
+      // Удаляем обработчики при размонтировании
+      document.removeEventListener('touchstart', preventZoom);
+      document.removeEventListener('touchend', preventDoubleTapZoom);
+      window.removeEventListener('resize', setMobileHeight);
+    };
   }, []);
 
   return (
     <FirebaseProvider>
       <UserProvider>
         <AppThemeProvider>
+          <CssBaseline />
           <Router>
             <Routes>
               <Route path="/" element={<MainLayout />}>

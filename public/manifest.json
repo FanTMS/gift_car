@@ -1,6 +1,6 @@
 {
   "short_name": "Car Raffle",
-  "name": "Розыгрыши Автомобилей",
+  "name": "Car Raffle App",
   "description": "Участвуй в розыгрышах роскошных автомобилей всего от 500 ₽. Более 250 победителей уже получили свои авто!",
   "icons": [
     {
@@ -11,8 +11,7 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any maskable"
+      "sizes": "192x192"
     },
     {
       "src": "logo512.png",
@@ -22,7 +21,8 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#1976D2",
+  "orientation": "portrait",
+  "theme_color": "#000000",
   "background_color": "#ffffff",
   "prefer_related_applications": false,
   "scope": "/",

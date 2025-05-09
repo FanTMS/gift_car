@@ -1,5 +1,5 @@
-import React from 'react';
-import { Box, CssBaseline, Container, useTheme } from '@mui/material';
+import React, { useEffect } from 'react';
+import { Box, CssBaseline, Container, useTheme, useMediaQuery } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import AppHeader from './AppHeader';
 import BottomNavigationBar from './BottomNavigation';
@@ -10,11 +10,27 @@ import { useThemeContext } from '../../context/ThemeContext';
 const MainContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
-  minHeight: '100vh',
+  minHeight: '100%',
+  width: '100%',
+  position: 'relative',
+  overflow: 'hidden',
   backgroundColor: theme.palette.background.default,
-  transition: theme.transitions.create(['background-color'], {
-    duration: theme.transitions.duration.standard,
-  }),
+}));
+
+const ContentContainer = styled(Box)(({ theme }) => ({
+  flexGrow: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+  overflowY: 'auto',
+  overflowX: 'hidden',
+  position: 'relative',
+  paddingBottom: theme.spacing(7),
+  [theme.breakpoints.down('sm')]: {
+    paddingBottom: theme.spacing(8),
+    height: 'calc(100% - 56px)',
+    height: 'calc(var(--vh, 1vh) * 100 - 56px)',
+  },
 }));
 
 const PageContainer = styled(Container)(({ theme }) => ({
@@ -71,6 +87,7 @@ const MainLayout: React.FC = () => {
   const theme = useTheme();
   const { mode } = useThemeContext();
   const isDarkMode = mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   const gradientBackground = isDarkMode 
     ? 'radial-gradient(circle at top left, rgba(21, 101, 192, 0.15) 0%, rgba(13, 71, 161, 0) 70%)'
@@ -80,6 +97,22 @@ const MainLayout: React.FC = () => {
     ? 'radial-gradient(circle at bottom right, rgba(21, 101, 192, 0.1) 0%, rgba(13, 71, 161, 0) 70%)'
     : 'radial-gradient(circle at bottom right, rgba(33, 150, 243, 0.1) 0%, rgba(25, 118, 210, 0) 70%)';
   
+  useEffect(() => {
+    const handleResize = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
   return (
     <MainContainer>
       <CssBaseline />
@@ -97,9 +130,19 @@ const MainLayout: React.FC = () => {
           transition={pageTransition}
           style={{ flex: 1 }}
         >
-          <PageContainer>
-            <Outlet />
-          </PageContainer>
+          <ContentContainer>
+            <Container 
+              maxWidth="lg" 
+              sx={{ 
+                flexGrow: 1, 
+                py: { xs: 1, sm: 2 },
+                px: { xs: 1, sm: 2 },
+                width: '100%'
+              }}
+            >
+              <Outlet />
+            </Container>
+          </ContentContainer>
         </motion.div>
       </AnimatePresence>
       

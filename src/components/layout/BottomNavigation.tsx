@@ -4,7 +4,9 @@ import {
   Box,
   Badge,
   Typography,
-  useMediaQuery
+  useMediaQuery,
+  BottomNavigation,
+  BottomNavigationAction
 } from '@mui/material';
 import { styled, alpha, useTheme } from '@mui/material/styles';
 import { 
@@ -20,6 +22,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useFirebase } from '../../context/FirebaseContext';
+import HomeIcon from '@mui/icons-material/Home';
+import ListIcon from '@mui/icons-material/List';
+import PersonIcon from '@mui/icons-material/Person';
+import InfoIcon from '@mui/icons-material/Info';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 // Объявляем расширенный интерфейс Window для типизации Telegram WebApp
 declare global {
@@ -198,6 +205,32 @@ interface NavItemType {
   withBadge?: boolean;
 }
 
+const StyledBottomNavigation = styled(Paper)(({ theme }) => ({
+  position: 'fixed',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  paddingBottom: 'var(--safe-area-bottom, 0px)',
+  zIndex: 1100,
+  boxShadow: '0px -2px 10px rgba(0, 0, 0, 0.1)',
+  borderRadius: '12px 12px 0 0',
+  overflow: 'hidden',
+  backdropFilter: 'blur(10px)',
+  backgroundColor: theme.palette.mode === 'dark' 
+    ? 'rgba(18, 18, 18, 0.85)' 
+    : 'rgba(255, 255, 255, 0.85)',
+  transition: 'all 0.3s ease',
+  '& .MuiBottomNavigationAction-root': {
+    maxWidth: 'none',
+    minWidth: 'auto',
+    padding: '6px 0',
+    fontSize: '0.75rem',
+    '&.Mui-selected': {
+      fontSize: '0.75rem',
+    },
+  },
+}));
+
 const BottomNavigationBar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -216,100 +249,79 @@ const BottomNavigationBar: React.FC = () => {
     setMounted(true);
   }, []);
   
-  // Базовые элементы навигации для всех пользователей
-  const navItems: NavItemType[] = [
-    { path: '/', label: 'Главная', icon: <Home fontSize="small" /> },
-    { path: '/raffles', label: 'Розыгрыши', icon: <DirectionsCar fontSize="small" /> },
-    { path: '/wallet', label: 'Кошелек', icon: <AccountBalanceWallet fontSize="small" /> },
-    { path: '/notifications', label: 'Уведомления', icon: <Notifications fontSize="small" />, withBadge: true },
-    { path: '/profile', label: 'Профиль', icon: <Person fontSize="small" /> },
-  ];
-  
-  // Добавляем пункт "Настройки" только для администраторов
-  const navItemsWithSettings: NavItemType[] = isAdmin 
-    ? [...navItems, { path: '/settings', label: 'Настройки', icon: <Settings fontSize="small" /> }]
-    : navItems;
-  
-  const handleNavClick = (path: string) => () => {
-    // Анимация клика для тактильной обратной связи
-    const navigationWithFeedback = async () => {
-      if ('vibrate' in navigator) {
-        try {
-          navigator.vibrate(15); // Улучшенная тактильная обратная связь
-        } catch (e) {
-          console.log('Vibration not supported');
-        }
-      }
-      navigate(path);
-    };
+  // Функция для определения активной вкладки
+  const getActiveTab = () => {
+    const path = location.pathname;
     
-    navigationWithFeedback();
+    if (path === '/') return 0;
+    if (path.startsWith('/raffles')) return 1;
+    if (path.startsWith('/winners')) return 2;
+    if (path.startsWith('/about')) return 3;
+    if (path.startsWith('/profile')) return 4;
+    
+    return 0; // По умолчанию - главная
   };
   
-  const renderNavItems = () => {
-    return navItemsWithSettings.map((item) => {
-      const isActive = location.pathname === item.path || 
-                      (item.path !== '/' && location.pathname.startsWith(item.path));
-      
-      return (
-        <NavItem 
-          key={item.path} 
-          className={isActive ? 'active' : ''}
-          onClick={handleNavClick(item.path)}
-        >
-          <NavIconBox>
-            {isActive && (
-              <ActiveIndicator
-                layoutId="activeIndicator"
-                initial={false}
-                transition={{
-                  type: 'spring',
-                  stiffness: 500,
-                  damping: 35
-                }}
-              />
-            )}
-            
-            {item.withBadge ? (
-              <Badge 
-                color="error" 
-                variant="dot" 
-                invisible={unreadCount === 0}
-                sx={{ 
-                  '& .MuiBadge-badge': {
-                    top: 3,
-                    right: 3,
-                    transform: 'scale(1.2) translate(25%, -25%)',
-                    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`
-                  }
-                }}
-              >
-                {item.icon}
-              </Badge>
-            ) : (
-              item.icon
-            )}
-          </NavIconBox>
-          
-          <NavText variant="caption">
-            {item.label}
-          </NavText>
-        </NavItem>
-      );
-    });
+  // Обработчик изменения вкладки
+  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+    switch(newValue) {
+      case 0:
+        navigate('/');
+        break;
+      case 1:
+        navigate('/raffles');
+        break;
+      case 2:
+        navigate('/winners');
+        break;
+      case 3:
+        navigate('/about');
+        break;
+      case 4:
+        navigate('/profile');
+        break;
+      default:
+        navigate('/');
+    }
   };
   
   if (!mounted || isTelegramMiniApp) return null;
   
   return (
-    <NavigationContainer 
-      elevation={0}
-      className="safe-area-padding-bottom"
+    <StyledBottomNavigation
+      elevation={3}
     >
-      <NavigationBar>
-        {renderNavItems()}
-      </NavigationBar>
-    </NavigationContainer>
+      <BottomNavigation
+        value={getActiveTab()}
+        onChange={handleChange}
+        showLabels
+        sx={{
+          width: '100%',
+          bgcolor: 'transparent',
+        }}
+      >
+        <BottomNavigationAction 
+          label="Главная" 
+          icon={<HomeIcon />} 
+        />
+        <BottomNavigationAction 
+          label="Розыгрыши" 
+          icon={<ListIcon />} 
+        />
+        <BottomNavigationAction 
+          label="Победители" 
+          icon={<EmojiEventsIcon />} 
+        />
+        <BottomNavigationAction 
+          label="О нас" 
+          icon={<InfoIcon />} 
+        />
+        <BottomNavigationAction 
+          label="Профиль" 
+          icon={<PersonIcon />} 
+        />
+      </BottomNavigation>
+    </StyledBottomNavigation>
   );
 };
 
