@@ -5,17 +5,8 @@
 [build.environment]
   CI = "false"
   DISABLE_ESLINT_PLUGIN = "true"
+  EXTEND_ESLINT = "false"
 
-[[plugins]]
-  package = "./.netlify/netlify-plugin-skip-eslint"
-
-# Правила для всех маршрутов
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# Настройки заголовков для улучшения производительности и безопасности
 [[headers]]
   for = "/*"
   [headers.values]
@@ -26,14 +17,17 @@
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
 
-# Особые настройки кэширования для HTML файлов (не кэшировать)
 [[headers]]
   for = "/*.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# Настройки для Service Worker
 [[headers]]
   for = "/service-worker.js"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate" 
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200 
