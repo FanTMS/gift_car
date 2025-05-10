@@ -28,7 +28,6 @@ const ContentContainer = styled(Box)(({ theme }) => ({
   paddingBottom: theme.spacing(7),
   [theme.breakpoints.down('sm')]: {
     paddingBottom: theme.spacing(8),
-    height: 'calc(100% - 56px)',
     height: 'calc(var(--vh, 1vh) * 100 - 56px)',
   },
 }));
