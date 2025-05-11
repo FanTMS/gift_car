@@ -1,0 +1,617 @@
+/* Импорт шрифта Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Базовые стили */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Стили для всего приложения */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  background-color: var(--tg-theme-bg-color, #f5f7fa);
+}
+
+/* Добавляем плавные переходы для всех элементов */
+a, button, input, select, textarea, div {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Стили для плавной прокрутки */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Оптимизация для мобильных устройств */
+@media (max-width: 600px) {
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Стили для Telegram Mini App */
+body.telegram-mini-app {
+  background-color: var(--tg-theme-bg-color, #121212);
+  color: var(--tg-theme-text-color, #ffffff);
+}
+
+.telegram-mini-app .MuiButton-contained {
+  background-color: var(--tg-theme-button-color, #2196F3);
+  color: var(--tg-theme-button-text-color, #ffffff);
+}
+
+.telegram-mini-app .MuiButton-text {
+  color: var(--tg-theme-hint-color, #5f6368);
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Классы анимаций для использования */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-in-out forwards;
+}
+
+.slide-right {
+  animation: slideInRight 0.5s ease-in-out forwards;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Утилиты для обрезки текста */
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* Стили для сетки на маленьких экранах */
+@media (max-width: 600px) {
+  .grid-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 0 8px;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 960px) {
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    padding: 0 16px;
+  }
+}
+
+@media (min-width: 961px) {
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    padding: 0 24px;
+  }
+}
+
+/* Улучшенные стили для контейнеров */
+.content-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@media (max-width: 600px) {
+  .content-container {
+    padding: 0 12px;
+  }
+}
+
+/* Стили для скелетонов загрузки */
+.skeleton-pulse {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.5s infinite;
+}
+
+@keyframes skeletonPulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Стили для эффектов наведения на карточки */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Улучшенные фокусы для доступности */
+:focus {
+  outline: 2px solid rgba(33, 150, 243, 0.5);
+  outline-offset: 2px;
+}
+
+input:focus, button:focus, a:focus {
+  outline: 2px solid rgba(33, 150, 243, 0.5);
+  outline-offset: 2px;
+}
+
+/* Скрыть контуры при использовании мыши */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Стили для вертикального разделителя */
+.vertical-divider {
+  width: 1px;
+  height: 24px;
+  background-color: rgba(0, 0, 0, 0.1);
+  margin: 0 16px;
+}
+
+/* Градиентные эффекты */
+.gradient-primary {
+  background: linear-gradient(90deg, #2196F3 0%, #1976D2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+/* Текстовые эффекты */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Улучшенные стили для кнопок */
+.button-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.button-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(30deg);
+  transition: transform 0.5s;
+  opacity: 0;
+}
+
+.button-shine:hover::after {
+  opacity: 1;
+  transform: rotate(30deg) translate(100%, -100%);
+}
+
+/* Дополнительные улучшения для Telegram Mini App */
+/* Кастомные цвета для Telegram */
+:root {
+  --tg-theme-bg-color: #f5f7fa;
+  --tg-theme-text-color: #000000;
+  --tg-theme-hint-color: #5f6368;
+  --tg-theme-link-color: #2196F3;
+  --tg-theme-button-color: #2196F3;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-secondary-bg-color: #ffffff;
+}
+
+/* Добавляем поддержку тёмной темы Telegram */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tg-theme-bg-color: #121212;
+    --tg-theme-text-color: #ffffff;
+    --tg-theme-hint-color: #8c8c8c;
+    --tg-theme-link-color: #64B5F6;
+    --tg-theme-button-color: #1976D2;
+    --tg-theme-button-text-color: #ffffff;
+    --tg-theme-secondary-bg-color: #1e1e1e;
+  }
+}
+
+/* Стили для безопасной области (Safe area) в iOS */
+.safe-area-padding {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-padding-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Улучшения для работы скроллинга на мобильных устройствах */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Удаляем стрелки для числовых полей */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+/* Стили для стеклянных эффектов */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-effect-dark {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Стили для улучшенного контраста и доступности */
+.high-contrast-text {
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+}
+
+/* Стили для декоративных элементов */
+.decorative-line {
+  height: 3px;
+  width: 60px;
+  background: linear-gradient(90deg, #2196F3 0%, #1976D2 100%);
+  border-radius: 3px;
+  margin: 12px 0;
+}
+
+.App {
+  text-align: center;
+  max-width: 100%;
+  min-height: 100vh;
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--tg-theme-bg-color, #121212);
+  color: var(--tg-theme-text-color, #ffffff);
+  display: flex;
+  flex-direction: column;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #2196F3;
+  padding: 1rem;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+main {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.car-card {
+  background-color: var(--tg-theme-secondary-bg-color, #1e1e1e);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  width: 100%;
+  max-width: 350px;
+  margin-bottom: 1rem;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.car-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.car-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.car-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.car-details {
+  padding: 1rem;
+  text-align: left;
+}
+
+.car-details h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: var(--tg-theme-text-color, #ffffff);
+}
+
+.car-details p {
+  margin: 0 0 1rem 0;
+  color: var(--tg-theme-hint-color, #8c8c8c);
+}
+
+.progress-bar {
+  background-color: #e0e0e0;
+  height: 8px;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.progress {
+  background-color: #2196F3;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.tickets {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.price-buy {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.price {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #2196F3;
+  margin: 0;
+}
+
+.buy-button {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.buy-button:hover {
+  background-color: #1976D2;
+  transform: translateY(-2px);
+}
+
+.buy-button:active {
+  transform: translateY(0);
+}
+
+.App-footer {
+  background-color: var(--tg-theme-secondary-bg-color, #1e1e1e);
+  padding: 1rem;
+  margin-top: 1rem;
+  color: var(--tg-theme-hint-color, #8c8c8c);
+  font-size: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Кастомные карточки для темной темы */
+.card-dark {
+  background-color: var(--tg-theme-secondary-bg-color, #1e1e1e);
+  color: var(--tg-theme-text-color, #ffffff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Глобальные переменные */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --app-height: 100%;
+}
+
+/* Глобальные стили для мобильной адаптации */
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  height: -webkit-fill-available;
+  overflow: hidden;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+  height: 100vh;
+  height: var(--app-height);
+  height: -webkit-fill-available;
+  width: 100vw;
+  position: fixed;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Запрет масштабирования на iOS */
+@supports (-webkit-touch-callout: none) {
+  * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+/* Фиксы для мобильных браузеров */
+@media (max-width: 768px) {
+  /* Исправление проблемы с 100vh в мобильных браузерах */
+  .full-height {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  /* Скрытие адресной строки в iOS */
+  .ios-fix {
+    padding-top: var(--safe-area-top);
+    padding-bottom: var(--safe-area-bottom);
+    padding-left: var(--safe-area-left);
+    padding-right: var(--safe-area-right);
+  }
+  
+  /* Устранение резиновой прокрутки */
+  .no-bounce {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Предотвращение случайных нажатий */
+  .prevent-touch-callout {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Стили для кнопок */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Скрытие вертикальной прокрутки с сохранением функциональности */
+.scrollable {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.scrollable::-webkit-scrollbar {
+  display: none;
+}
