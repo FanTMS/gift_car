@@ -528,7 +528,6 @@ html {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   height: -webkit-fill-available;
-  overflow: hidden;
 }
 
 body {
@@ -539,15 +538,13 @@ body {
   height: var(--app-height);
   height: -webkit-fill-available;
   width: 100vw;
-  position: fixed;
-  overflow: hidden;
   padding: 0;
   margin: 0;
 }
 
 #root {
   height: 100%;
-  overflow: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
@@ -614,4 +611,12 @@ button, a {
 
 .scrollable::-webkit-scrollbar {
   display: none;
+}
+
+/* Класс для разрешения прокрутки на всех устройствах */
+.scrollable-page {
+  overflow-y: auto !important;
+  position: static !important;
+  height: auto !important;
+  max-height: none !important;
 }

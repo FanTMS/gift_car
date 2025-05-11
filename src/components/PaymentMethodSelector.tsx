@@ -69,14 +69,35 @@ const TelegramWalletLogo = () => (
   />
 );
 
+const TonWalletLogo = () => (
+  <Box 
+    component="img" 
+    src="/assets/ton-logo.svg" 
+    alt="TON Wallet" 
+    sx={{ 
+      height: 24,
+      objectFit: 'contain',
+      filter: 'grayscale(0.4)',
+      '.selected &': {
+        filter: 'grayscale(0)',
+      }
+    }} 
+    onError={(e) => {
+      (e.target as HTMLImageElement).style.display = 'none';
+    }}
+  />
+);
+
 interface PaymentMethodSelectorProps {
   selectedMethod: PaymentMethod;
   onMethodChange: (method: PaymentMethod) => void;
+  showTonOption?: boolean;
 }
 
 const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({ 
   selectedMethod, 
-  onMethodChange 
+  onMethodChange,
+  showTonOption = false
 }) => {
   const handleMethodChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onMethodChange(event.target.value as PaymentMethod);
@@ -151,6 +172,34 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
             <TelegramWalletLogo />
           </Box>
         </PaymentMethodItem>
+        
+        {showTonOption && (
+          <PaymentMethodItem 
+            className={selectedMethod === 'ton_wallet' ? 'selected' : ''}
+            onClick={() => handleItemClick('ton_wallet')}
+            elevation={0}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <FormControlLabel
+                  value="ton_wallet"
+                  control={<Radio />}
+                  label=""
+                  sx={{ mr: 0 }}
+                />
+                <Box sx={{ ml: 1 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    TON Кошелек
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Оплата через TON кошелек (Tonkeeper, Bitget и другие)
+                  </Typography>
+                </Box>
+              </Box>
+              <TonWalletLogo />
+            </Box>
+          </PaymentMethodItem>
+        )}
       </RadioGroup>
     </Box>
   );

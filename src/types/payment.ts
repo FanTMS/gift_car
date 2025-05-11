@@ -1,4 +1,4 @@
-export type PaymentMethod = 'yoomoney' | 'telegram_wallet';
+export type PaymentMethod = 'yoomoney' | 'telegram_wallet' | 'ton_wallet';
 
 export interface PaymentResult {
   success: boolean;
@@ -45,5 +45,18 @@ export interface TelegramWalletPaymentResponse {
   success: boolean;
   invoiceUrl?: string;
   invoiceId?: string;
+  error?: string;
+}
+
+// TON Wallet specific types
+export interface TonWalletPaymentRequest {
+  amountTon: number;
+  userId: string;
+  description?: string;
+}
+
+export interface TonWalletPaymentResponse {
+  success: boolean;
+  transactionHash?: string;
   error?: string;
 } 

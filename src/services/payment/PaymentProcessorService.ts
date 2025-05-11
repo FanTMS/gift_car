@@ -1,5 +1,5 @@
 import { PaymentServiceFactory } from './PaymentServiceFactory';
-import { PaymentMethod, PaymentRequest, PaymentResult } from '../../types/payment';
+import { PaymentMethod, PaymentRequest, PaymentResult, TelegramWalletPaymentRequest } from '../../types/payment';
 import { v4 as uuidv4 } from 'uuid';
 import { YooMoneyPaymentService } from './YooMoneyPaymentService';
 import { db } from '../../firebase/config';
@@ -126,6 +126,19 @@ export class PaymentProcessorService {
             customerId,
             metadata
           );
+        
+        case 'telegram_wallet':
+          // Создаем экземпляр сервиса через фабрику
+          const telegramService = PaymentServiceFactory.createPaymentService('telegram_wallet');
+          
+          // Инициируем платеж с приведением типов к TelegramWalletPaymentRequest
+          return await telegramService.initiatePayment({
+            amount,
+            description,
+            orderId: transactionRef.id,
+            returnUrl: window.location.origin + '/wallet',
+            telegramUserId: customerId
+          } as TelegramWalletPaymentRequest);
         
         // Другие методы оплаты можно добавить здесь
         

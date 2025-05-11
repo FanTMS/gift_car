@@ -52,6 +52,12 @@ import { useFirebase } from '../context/FirebaseContext';
 import { getDoc, doc, getDocs, query, where, orderBy, collection } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useNavigate } from 'react-router-dom';
+import TonConnectComponent from '../components/wallet/TonConnectComponent';
+import { TonPaymentService } from '../services/payment/TonPaymentService';
+import TonConnectService from '../services/TonConnectService';
+
+// Константа с base64 иконкой TON
+const tonLogoBase64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwIDQwQzMxLjA0NTcgNDAgNDAgMzEuMDQ1NyA0MCAyMEM0MCA4Ljk1NDMgMzEuMDQ1NyAwIDIwIDBDOC45NTQzIDAgMCA4Ljk1NDMgMCAyMEMwIDMxLjA0NTcgOC45NTQzIDQwIDIwIDQwWiIgZmlsbD0iIzAzODhDQyIvPgo8cGF0aCBkPSJNMTYuNjA5MSAxOS41ODIzTDI1LjEyNTIgMTYuMDIzOUwyMS45Njc1IDI0LjIzMDVMMTYuNjA5MSAxOS41ODIzWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE2LjYwOTEgMTkuNTgyMkwyMC43NzAzIDEzLjMwNDdMMjUuMTI1MSAxNi4wMjM5TDE2LjYwOTEgMTkuNTgyMloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMy45MTAyIDI2LjA4NjNMMTYuNjA5MSAxOS41ODIzTDIxLjk2NzUgMjQuMjMwNUwxMy45MTAyIDI2LjA4NjNaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTMuOTEwMiAyNi4wODYzTDEzLjc3NzMgMTguMjg5NkwxNi42MDkxIDE5LjU4MjNMMTMuOTEwMiAyNi4wODYzWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE2LjYwOTEgMTkuNTgyM0wxMy43NzczIDE4LjI4OTZMMjAuNzcwMyAxMy4zMDQ3TDE2LjYwOTEgMTkuNTgyM1oiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
 
 // Стилизованные компоненты с современным дизайном
 const WalletContainer = styled(Container)(({ theme }) => ({
@@ -89,17 +95,17 @@ const WalletCard = styled(Paper)(({ theme }) => ({
   },
 }));
 
-const BalanceText = styled(Typography)(({ theme }) => ({
-  fontSize: '2.4rem',
+const BalanceTextWrapper = styled(Box)(({ theme }) => ({
+  fontSize: '2.5rem',
   fontWeight: 700,
-  marginBottom: theme.spacing(0.5),
   display: 'flex',
-  alignItems: 'flex-end',
+  alignItems: 'center',
+  marginTop: theme.spacing(1),
   '& .currency': {
-    fontSize: '1.3rem',
-    opacity: 0.9,
-    marginLeft: theme.spacing(1),
-    fontWeight: 500,
+    fontSize: '1.6rem',
+    opacity: 0.8,
+    marginLeft: theme.spacing(0.5),
+    alignSelf: 'flex-start'
   }
 }));
 
@@ -313,6 +319,45 @@ const WalletPage: React.FC = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState<number>(0);
+  const [isTelegramMiniApp, setIsTelegramMiniApp] = useState<boolean>(false);
+  const [tonWalletConnected, setTonWalletConnected] = useState<boolean>(false);
+  const [tonWalletAddress, setTonWalletAddress] = useState<string | null>(null);
+  const [tonWalletError, setTonWalletError] = useState<string | null>(null);
+  const [openTonTopupDialog, setOpenTonTopupDialog] = useState<boolean>(false);
+  const [tonTopupAmount, setTonTopupAmount] = useState<string>('');
+  const [isProcessingTonPayment, setIsProcessingTonPayment] = useState<boolean>(false);
+  const [tonPaymentError, setTonPaymentError] = useState<string | null>(null);
+  const [tonToRubRate, setTonToRubRate] = useState<number>(270); // Примерный курс TON к рублю
+
+  // Проверяем, запущено ли приложение в Telegram и статус подключения TON
+  useEffect(() => {
+    const checkTelegramWebApp = () => {
+      // @ts-ignore - игнорируем ошибки TypeScript для Telegram API
+      const isTelegram = Boolean(window?.Telegram?.WebApp);
+      setIsTelegramMiniApp(isTelegram);
+      
+      // Если в телеграм, проверяем подключение TON кошелька
+      if (isTelegram && user) {
+        try {
+          // Используем централизованный сервис для проверки подключения
+          const tonConnectService = TonConnectService.getInstance();
+          
+          // Если уже подключен, получаем адрес
+          if (tonConnectService.isConnected()) {
+            const address = tonConnectService.getWalletAddress();
+            if (address) {
+              setTonWalletConnected(true);
+              setTonWalletAddress(address);
+            }
+          }
+        } catch (error) {
+          console.error('Error checking TON wallet connection:', error);
+        }
+      }
+    };
+    
+    checkTelegramWebApp();
+  }, [user]);
 
   // Загружаем баланс и транзакции
   useEffect(() => {
@@ -365,8 +410,19 @@ const WalletPage: React.FC = () => {
     setOpenTopupDialog(false);
   };
 
+  // Показываем опцию TON только если кошелек подключен и мы в Telegram Mini App
+  const showTonOption = tonWalletConnected && isTelegramMiniApp;
+
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     setPaymentMethod(method);
+    
+    // Если выбран TON кошелек, открываем специальный диалог
+    if (method === 'ton_wallet') {
+      handleCloseTopupDialog();
+      setTimeout(() => {
+        handleOpenTonTopupDialog();
+      }, 300);
+    }
   };
 
   const handleProcessPayment = async () => {
@@ -380,12 +436,25 @@ const WalletPage: React.FC = () => {
     
     try {
       const amount = parseFloat(topupAmount);
+      
+      // Получаем ID телеграм-пользователя, если мини-приложение запущено через Telegram
+      let additionalMetadata = { operation: 'wallet_topup' };
+      
+      // Если это телеграм-приложение и выбран способ оплаты через Telegram
+      if (isTelegramMiniApp && paymentMethod === 'telegram_wallet') {
+        // @ts-ignore - игнорируем ошибки TypeScript для Telegram API
+        if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+          // @ts-ignore - игнорируем ошибки TypeScript для Telegram API
+          additionalMetadata.telegramUserId = window.Telegram.WebApp.initDataUnsafe.user.id.toString();
+        }
+      }
+      
       const result = await PaymentProcessorService.processPayment(
         paymentMethod,
         amount,
         'Пополнение баланса',
         user?.uid,
-        { operation: 'wallet_topup' }
+        additionalMetadata
       );
       
       if (!result.success) {
@@ -427,6 +496,79 @@ const WalletPage: React.FC = () => {
     return true;
   });
 
+  // Обработчики для TonConnect
+  const handleTonWalletConnected = (walletAddress: string) => {
+    console.log('TON wallet connected:', walletAddress);
+    setTonWalletConnected(true);
+    setTonWalletAddress(walletAddress);
+    setTonWalletError(null);
+  };
+  
+  const handleTonWalletError = (error: string) => {
+    console.error('TON wallet error:', error);
+    setTonWalletError(error);
+  };
+
+  // Обработчики для TON топапа
+  const handleOpenTonTopupDialog = () => {
+    setOpenTonTopupDialog(true);
+    setTonTopupAmount('');
+    setTonPaymentError(null);
+  };
+
+  const handleCloseTonTopupDialog = () => {
+    setOpenTonTopupDialog(false);
+  };
+
+  // Функция для конвертации TON в рубли
+  const calculateRubAmount = (tonAmount: string): number => {
+    const amountTon = parseFloat(tonAmount) || 0;
+    return Math.floor(amountTon * tonToRubRate);
+  };
+
+  // Обработчик пополнения через TON
+  const handleProcessTonPayment = async () => {
+    if (!tonTopupAmount || isNaN(parseFloat(tonTopupAmount)) || parseFloat(tonTopupAmount) <= 0) {
+      setTonPaymentError('Пожалуйста, введите корректную сумму');
+      return;
+    }
+    
+    setIsProcessingTonPayment(true);
+    setTonPaymentError(null);
+    
+    try {
+      if (!user) {
+        throw new Error('Необходимо авторизоваться');
+      }
+      
+      const amountTon = parseFloat(tonTopupAmount);
+      
+      // Проверяем, подключен ли TON кошелек
+      if (!tonWalletConnected) {
+        throw new Error('TON кошелек не подключен');
+      }
+      
+      // Отправляем TON транзакцию
+      const result = await TonPaymentService.topUpBalance(user.uid, amountTon);
+      
+      if (result.success) {
+        setOpenTonTopupDialog(false);
+        // Обновляем данные на странице
+        window.location.reload();
+      } else {
+        setTonPaymentError(result.error || 'Ошибка при обработке TON транзакции');
+      }
+    } catch (error) {
+      console.error('TON payment error:', error);
+      setTonPaymentError(error instanceof Error ? error.message : 'Неизвестная ошибка');
+    } finally {
+      setIsProcessingTonPayment(false);
+    }
+  };
+
+  // Предопределенные суммы для быстрого пополнения в TON
+  const quickTonAmounts = [0.1, 0.5, 1, 5];
+
   return (
     <WalletContainer>
       <motion.div
@@ -447,12 +589,12 @@ const WalletPage: React.FC = () => {
               Ваш баланс
             </Typography>
             
-            <BalanceText variant="h3">
+            <BalanceTextWrapper>
               {new Intl.NumberFormat('ru-RU', {
                 maximumFractionDigits: 0
               }).format(balance)}
               <span className="currency">₽</span>
-            </BalanceText>
+            </BalanceTextWrapper>
             
             <Box sx={{ display: 'flex', mt: 3 }}>
               <ActionButton
@@ -480,6 +622,77 @@ const WalletPage: React.FC = () => {
           </Box>
         </WalletCard>
       </motion.div>
+      
+      {/* Секция для TON кошелька */}
+      {isTelegramMiniApp && (
+        <Box sx={{ mt: 4, mb: 4 }}>
+          {tonWalletConnected ? (
+            <Paper 
+              elevation={2} 
+              sx={{ 
+                p: 3, 
+                borderRadius: 4, 
+                background: alpha(theme.palette.primary.light, 0.08),
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                    <Avatar 
+                      sx={{ 
+                        bgcolor: alpha(theme.palette.primary.main, 0.1), 
+                        color: theme.palette.primary.main, 
+                        width: 32, 
+                        height: 32, 
+                        mr: 1 
+                      }}
+                    >
+                      <img 
+                        src={tonLogoBase64} 
+                        alt="TON" 
+                        style={{ width: 18, height: 18 }} 
+                      />
+                    </Avatar>
+                    TON Кошелек подключен
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
+                    {tonWalletAddress && `${tonWalletAddress.slice(0, 6)}...${tonWalletAddress.slice(-6)}`}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Chip 
+                    label="Подключен" 
+                    color="success" 
+                    size="small" 
+                    sx={{ fontWeight: 600, mb: 1 }}
+                  />
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    onClick={handleOpenTonTopupDialog}
+                    startIcon={<AddCircleOutline />}
+                    sx={{ 
+                      ml: 1, 
+                      borderRadius: theme.spacing(2),
+                      textTransform: 'none',
+                      fontWeight: 600 
+                    }}
+                  >
+                    Пополнить через TON
+                  </Button>
+                </Box>
+              </Box>
+            </Paper>
+          ) : (
+            <TonConnectComponent 
+              onSuccessConnect={handleTonWalletConnected}
+              onError={handleTonWalletError}
+            />
+          )}
+        </Box>
+      )}
       
       <StyledTabs
         value={tabValue}
@@ -650,6 +863,7 @@ const WalletPage: React.FC = () => {
           <PaymentMethodSelector
             selectedMethod={paymentMethod}
             onMethodChange={handlePaymentMethodChange}
+            showTonOption={showTonOption}
           />
         </DialogContent>
         
@@ -671,6 +885,139 @@ const WalletPage: React.FC = () => {
             startIcon={isProcessingPayment ? <CircularProgress size={20} color="inherit" /> : null}
           >
             {isProcessingPayment ? 'Обработка...' : 'Пополнить'}
+          </Button>
+        </DialogActions>
+      </TopupDialog>
+      
+      {/* Диалог пополнения баланса через TON */}
+      <TopupDialog
+        open={openTonTopupDialog}
+        onClose={handleCloseTonTopupDialog}
+        fullWidth
+      >
+        <DialogHeader>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6">Пополнение баланса через TON</Typography>
+            <IconButton edge="end" onClick={handleCloseTonTopupDialog}>
+              <Close />
+            </IconButton>
+          </Box>
+        </DialogHeader>
+        
+        <DialogContent sx={{ p: 3 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            mb: 3 
+          }}>
+            <Avatar 
+              sx={{ 
+                width: 48, 
+                height: 48, 
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                color: theme.palette.primary.main,
+                mr: 2
+              }}
+            >
+              <img 
+                src={tonLogoBase64} 
+                alt="TON" 
+                style={{ width: 28, height: 28 }} 
+              />
+            </Avatar>
+            <Typography variant="h6">
+              Пополнение через TON Wallet
+            </Typography>
+          </Box>
+          
+          <Typography variant="body1" sx={{ mb: 3 }}>
+            Введите сумму в TON или выберите из предложенных вариантов:
+          </Typography>
+          
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 3 }}>
+            {quickTonAmounts.map((amount) => (
+              <AmountButton
+                key={amount}
+                onClick={() => setTonTopupAmount(amount.toString())}
+                variant={tonTopupAmount === amount.toString() ? 'contained' : 'outlined'}
+                color={tonTopupAmount === amount.toString() ? 'primary' : 'inherit'}
+              >
+                {amount} TON
+              </AmountButton>
+            ))}
+          </Box>
+          
+          <TextField
+            fullWidth
+            label="Сумма пополнения"
+            variant="outlined"
+            value={tonTopupAmount}
+            onChange={(e) => setTonTopupAmount(e.target.value)}
+            type="number"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <img 
+                    src={tonLogoBase64} 
+                    alt="TON" 
+                    style={{ width: 16, height: 16 }} 
+                  />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  TON
+                </InputAdornment>
+              ),
+            }}
+            sx={{ 
+              mb: 3,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2
+              }
+            }}
+            error={!!tonPaymentError}
+            helperText={tonPaymentError}
+          />
+          
+          <Divider sx={{ mb: 3 }} />
+          
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Примерная сумма в рублях:
+          </Typography>
+          
+          <Typography variant="h6" sx={{ mb: 3, color: theme.palette.primary.main }}>
+            {new Intl.NumberFormat('ru-RU', {
+              style: 'currency',
+              currency: 'RUB',
+              maximumFractionDigits: 0
+            }).format(calculateRubAmount(tonTopupAmount))}
+          </Typography>
+          
+          <Typography variant="caption" color="text.secondary">
+            * Обмен происходит по текущему курсу 1 TON ≈ {tonToRubRate} ₽. Курс может меняться.
+          </Typography>
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button
+            onClick={handleCloseTonTopupDialog}
+            variant="outlined"
+            color="inherit"
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+          >
+            Отмена
+          </Button>
+          <Button
+            onClick={handleProcessTonPayment}
+            variant="contained"
+            color="primary"
+            disabled={isProcessingTonPayment || !tonTopupAmount}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+            startIcon={isProcessingTonPayment ? <CircularProgress size={20} color="inherit" /> : null}
+          >
+            {isProcessingTonPayment ? 'Обработка...' : 'Пополнить через TON'}
           </Button>
         </DialogActions>
       </TopupDialog>

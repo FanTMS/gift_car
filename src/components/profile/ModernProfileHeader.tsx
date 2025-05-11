@@ -112,14 +112,16 @@ const cardVariants = {
 
 interface ModernProfileHeaderProps {
   profile: User | null;
-  loading: boolean;
-  onEditProfile: () => void;
+  loading?: boolean;
+  onEdit: () => void;
+  isTelegramUser?: boolean;
 }
 
 const ModernProfileHeader: React.FC<ModernProfileHeaderProps> = ({ 
   profile, 
-  loading, 
-  onEditProfile 
+  loading = false, 
+  onEdit,
+  isTelegramUser = false
 }) => {
   const theme = useTheme();
   const isMobile = useIsMobile();
@@ -220,7 +222,7 @@ const ModernProfileHeader: React.FC<ModernProfileHeaderProps> = ({
             </Typography>
           )}
           
-          {profile.telegramId && (
+          {(profile.telegramId || isTelegramUser) && (
             <Chip
               icon={<Telegram fontSize="small" />}
               label="Telegram"
@@ -249,35 +251,47 @@ const ModernProfileHeader: React.FC<ModernProfileHeaderProps> = ({
           </Typography>
         )}
         
-        <ActionButton
-          startIcon={<Edit />}
-          onClick={onEditProfile}
-        >
-          Редактировать профиль
-        </ActionButton>
-        
         <StatsContainer>
           <StatItem>
             <Typography variant="h6" fontWeight={700}>
-              {profile.stats?.ticketsBought ?? profile.ticketsTotal ?? 0}
+              {profile.stats?.ticketsBought || profile.ticketsTotal || 0}
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.8 }}>Билетов</Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              Билетов
+            </Typography>
           </StatItem>
           
           <StatItem>
             <Typography variant="h6" fontWeight={700}>
-              {profile.stats?.rafflesWon ?? profile.wins ?? 0}
+              {profile.stats?.rafflesWon || profile.wins || 0}
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.8 }}>Побед</Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              Побед
+            </Typography>
           </StatItem>
           
           <StatItem>
             <Typography variant="h6" fontWeight={700}>
-              {profile.wallet?.balance ?? profile.balance ?? 0} ₽
+              {new Intl.NumberFormat('ru-RU', {
+                style: 'currency',
+                currency: 'RUB',
+                maximumFractionDigits: 0
+              }).format(profile.balance || 0)}
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.8 }}>Баланс</Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              Баланс
+            </Typography>
           </StatItem>
         </StatsContainer>
+        
+        <Box sx={{ mt: 3 }}>
+          <ActionButton
+            startIcon={<Edit />}
+            onClick={onEdit}
+          >
+            Редактировать профиль
+          </ActionButton>
+        </Box>
       </ProfileContent>
     </HeaderContainer>
   );

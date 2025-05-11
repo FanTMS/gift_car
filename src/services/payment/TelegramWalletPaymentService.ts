@@ -37,10 +37,26 @@ export class TelegramWalletPaymentService implements IPaymentService {
    */
   async initiatePayment(request: PaymentRequest): Promise<PaymentResult> {
     try {
+      // Проверяем наличие токена
+      if (!this.apiToken || this.apiToken.trim() === '') {
+        console.error('Отсутствует токен API Telegram. Настройте переменную REACT_APP_TELEGRAM_API_TOKEN в .env файле.');
+        return {
+          success: false,
+          error: 'Отсутствует токен API Telegram. Обратитесь к администратору.'
+        };
+      }
+
+      // Продолжаем обработку с валидным токеном
       const telegramRequest: TelegramWalletPaymentRequest = {
         ...request,
         botUsername: this.botUsername
       };
+
+      console.log('Используемые параметры Telegram API:', {
+        apiUrl: this.apiUrl,
+        botUsername: this.botUsername,
+        tokenFirstChars: this.apiToken ? `${this.apiToken.substring(0, 5)}...` : 'отсутствует'
+      });
 
       // Проверяем доступность Telegram Mini Apps API
       // @ts-ignore - Используем Telegram API, который может быть недоступен в типах

@@ -29,6 +29,7 @@ import { useFirebase } from '../../context/FirebaseContext';
 import { findUserByTelegramId, updateUserProfile } from '../../firebase/userServices';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { isTelegramMiniApp, openTonWallet, isTonWalletSupported } from '../../utils/telegramUtils';
 
 // Стилизованные компоненты
 const ConnectCard = styled(Paper)(({ theme }) => ({
@@ -176,16 +177,74 @@ const TelegramWalletConnect: React.FC<TelegramWalletConnectProps> = ({ onSuccess
       return;
     }
     
-    if (!telegramData) {
-      // Если нет данных Telegram, открываем бота или перенаправляем
-      window.open(`https://t.me/${botUsername}`, '_blank');
-      return;
-    }
-    
-    setIsConnecting(true);
-    setError(null);
-    
     try {
+      console.log('Telegram API status:', {
+        hasTelegramObject: Boolean(window.Telegram),
+        hasWebAppObject: Boolean(window.Telegram?.WebApp),
+        telegramVersion: (window.Telegram?.WebApp as any)?.version || 'unknown',
+        availableMethods: window.Telegram?.WebApp ? Object.getOwnPropertyNames(window.Telegram.WebApp) : [],
+        hasShowScanQrPopup: typeof (window.Telegram?.WebApp as any)?.showScanQrPopup === 'function',
+        hasOpenTonWallet: typeof (window.Telegram?.WebApp as any)?.openTonWallet === 'function',
+        isTelegramMiniApp: isTelegramMiniApp(),
+        isTonWalletSupported: isTonWalletSupported()
+      });
+      
+      // Если это не Telegram Mini App или нет доступа к Telegram WebApp API
+      if (!isTelegramMiniApp()) {
+        console.log('No Telegram WebApp available, opening bot in new window');
+        // Открываем бота в новом окне
+        window.open(`https://t.me/${botUsername}`, '_blank');
+        return;
+      }
+      
+      setIsConnecting(true);
+      setError(null);
+      
+      // Проверяем возможность работы с TON кошельком
+      if (isTonWalletSupported()) {
+        console.log('TON wallet support detected, trying to open wallet');
+        
+        // Создаем URL возврата с учетом текущего приложения
+        const callbackUrl = window.location.origin + '/wallet/telegram';
+        
+        // Пытаемся открыть TON кошелек
+        const success = openTonWallet(callbackUrl);
+        
+        if (!success) {
+          console.warn('Failed to open TON wallet, falling back to standard flow');
+          // Если не удалось открыть TON кошелек, продолжаем стандартный подход
+          await handleStandardTelegramConnect();
+        }
+      } else {
+        console.log('No TON wallet methods available, using standard flow');
+        // Если нет возможности работы с TON кошельком, используем стандартный подход
+        await handleStandardTelegramConnect();
+      }
+    } catch (err) {
+      console.error('Error connecting Telegram wallet:', err);
+      setError('Ошибка при привязке кошелька Telegram. Пожалуйста, попробуйте позже.');
+      if (onError) onError('Ошибка при привязке кошелька Telegram');
+      setIsConnecting(false);
+    }
+  };
+  
+  // Стандартный подход к привязке Telegram (без TON)
+  const handleStandardTelegramConnect = async () => {
+    try {
+      if (!telegramData) {
+        // Если нет данных Telegram, открываем бота или перенаправляем
+        window.open(`https://t.me/${botUsername}`, '_blank');
+        setIsConnecting(false);
+        return;
+      }
+      
+      if (!user) {
+        setError('Необходимо авторизоваться для привязки кошелька');
+        if (onError) onError('Необходимо авторизоваться для привязки кошелька');
+        setIsConnecting(false);
+        return;
+      }
+      
       // Привязываем Telegram ID к пользователю
       const userDocRef = doc(db, 'users', user.uid);
       
@@ -220,11 +279,10 @@ const TelegramWalletConnect: React.FC<TelegramWalletConnectProps> = ({ onSuccess
       
       // Вызываем callback при успешном подключении
       if (onSuccessConnect) onSuccessConnect();
-      
     } catch (err) {
-      console.error('Error connecting Telegram wallet:', err);
-      setError('Ошибка при привязке кошелька Telegram. Пожалуйста, попробуйте позже.');
-      if (onError) onError('Ошибка при привязке кошелька Telegram');
+      console.error('Error with standard Telegram connect:', err);
+      setError('Ошибка при привязке Telegram ID');
+      if (onError) onError('Ошибка при привязке Telegram ID');
     } finally {
       setIsConnecting(false);
     }
@@ -348,15 +406,21 @@ const TelegramWalletConnect: React.FC<TelegramWalletConnectProps> = ({ onSuccess
         )}
         
         {isConnected && (
-          <ConnectButton
-            fullWidth
-            variant="outlined"
-            color="primary"
-            startIcon={<Telegram />}
-            onClick={() => window.open(`https://t.me/${botUsername}`, '_blank')}
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
           >
-            Открыть кошелек в Telegram
-          </ConnectButton>
+            <ConnectButton
+              fullWidth
+              variant="outlined"
+              color="primary"
+              startIcon={<Telegram />}
+              onClick={() => window.open(`https://t.me/${botUsername}`, '_blank')}
+            >
+              Открыть кошелек в Telegram
+            </ConnectButton>
+          </motion.div>
         )}
       </ConnectCard>
     </motion.div>

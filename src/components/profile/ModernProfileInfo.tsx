@@ -23,13 +23,17 @@ import {
   CalendarMonth,
   Public,
   Badge,
-  Telegram
+  Telegram,
+  AccountBalanceWallet
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { User } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useIsMobile } from '../hooks/useMobile';
+
+// Константа с base64 иконкой TON
+const tonLogoBase64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwIDQwQzMxLjA0NTcgNDAgNDAgMzEuMDQ1NyA0MCAyMEM0MCA4Ljk1NDMgMzEuMDQ1NyAwIDIwIDBDOC45NTQzIDAgMCA4Ljk1NDMgMCAyMEMwIDMxLjA0NTcgOC45NTQzIDQwIDIwIDQwWiIgZmlsbD0iIzAzODhDQyIvPgo8cGF0aCBkPSJNMTYuNjA5MSAxOS41ODIzTDI1LjEyNTIgMTYuMDIzOUwyMS45Njc1IDI0LjIzMDVMMTYuNjA5MSAxOS41ODIzWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE2LjYwOTEgMTkuNTgyMkwyMC43NzAzIDEzLjMwNDdMMjUuMTI1MSAxNi4wMjM5TDE2LjYwOTEgMTkuNTgyMloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMy45MTAyIDI2LjA4NjNMMTYuNjA5MSAxOS41ODIzTDIxLjk2NzUgMjQuMjMwNUwxMy45MTAyIDI2LjA4NjNaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTMuOTEwMiAyNi4wODYzTDEzLjc3NzMgMTguMjg5NkwxNi42MDkxIDE5LjU4MjNMMTMuOTEwMiAyNi4wODYzWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE2LjYwOTEgMTkuNTgyM0wxMy43NzczIDE4LjI4OTZMMjAuNzcwMyAxMy4zMDQ3TDE2LjYwOTEgMTkuNTgyM1oiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
 
 const SectionTitle = styled(Typography)(({ theme }) => ({
   fontWeight: 700,
@@ -94,6 +98,18 @@ const FlexColumn = styled(Box)(({ theme }) => ({
   [theme.breakpoints.down('sm')]: {
     flexBasis: '100%',
   }
+}));
+
+const TonIconBox = styled(Box)(({ theme }) => ({
+  width: 40,
+  height: 40,
+  borderRadius: '50%',
+  backgroundColor: alpha('#0388CC', 0.1),
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: theme.spacing(2),
+  flexShrink: 0,
 }));
 
 interface ModernProfileInfoProps {
@@ -237,6 +253,23 @@ const ModernProfileInfo: React.FC<ModernProfileInfoProps> = ({ profile, loading 
       visible: !!profile.telegramId
     },
     {
+      customIcon: (
+        <TonIconBox>
+          <Box
+            component="img"
+            src={tonLogoBase64}
+            alt="TON"
+            sx={{ width: 24, height: 24 }}
+          />
+        </TonIconBox>
+      ),
+      title: 'TON кошелек',
+      value: profile.wallet?.walletAddress 
+        ? `${profile.wallet.walletAddress.slice(0, 6)}...${profile.wallet.walletAddress.slice(-6)}`
+        : 'Не подключен',
+      visible: true
+    },
+    {
       icon: <Tag />,
       title: 'Реферальный код',
       value: profile.referralCode || '',
@@ -250,128 +283,143 @@ const ModernProfileInfo: React.FC<ModernProfileInfoProps> = ({ profile, loading 
     }
   ].filter(item => item.visible);
 
-  const statisticsItems = [
+  const userStatsItems = [
     {
       icon: <ConfirmationNumber />,
-      title: 'Всего купленных билетов',
-      value: `${profile.stats?.ticketsBought ?? profile.ticketsTotal ?? 0}`,
+      title: 'Купленных билетов',
+      value: profile.stats?.ticketsBought || 0,
       visible: true
     },
     {
       icon: <MonetizationOn />,
       title: 'Потрачено на билеты',
-      value: `${profile.stats?.totalSpent ?? 0} ₽`,
+      value: new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB',
+        maximumFractionDigits: 0
+      }).format(profile.stats?.totalSpent || 0),
       visible: true
     },
     {
       icon: <EmojiEvents />,
       title: 'Выигрышей',
-      value: `${profile.stats?.rafflesWon ?? profile.wins ?? 0}`,
+      value: profile.stats?.rafflesWon || 0,
+      visible: true
+    },
+    {
+      icon: <AccountBalanceWallet />,
+      title: 'Баланс',
+      value: new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB',
+        maximumFractionDigits: 0
+      }).format(profile.balance || 0),
       visible: true
     }
-  ];
+  ].filter(item => item.visible);
 
   const renderInfoItems = (items: any[]) => {
+    if (items.length === 0) {
+      return (
+        <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+          Нет данных
+        </Typography>
+      );
+    }
+    
     return items.map((item, index) => (
-      <motion.div 
-        key={index}
-        variants={itemVariants}
-      >
-        <InfoItemContainer>
+      <InfoItemContainer key={index}>
+        {item.customIcon || (
           <IconBox>
             {item.icon}
           </IconBox>
-          <Box>
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              sx={{ fontWeight: 500, fontSize: '0.8rem' }}
-            >
-              {item.title}
-            </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ fontWeight: 600 }}
-            >
-              {item.value || 'Не указано'}
-            </Typography>
-          </Box>
-        </InfoItemContainer>
-      </motion.div>
+        )}
+        <Box>
+          <Typography variant="body2" color="text.secondary">
+            {item.title}
+          </Typography>
+          <Typography variant="subtitle1" fontWeight={500}>
+            {item.value || 'Не указано'}
+          </Typography>
+        </Box>
+      </InfoItemContainer>
     ));
   };
 
   return (
     <motion.div
+      variants={containerVariants}
       initial="initial"
       animate="animate"
-      variants={containerVariants}
     >
+      <motion.div variants={itemVariants}>
+        <SectionTitle>
+          Личные данные
+        </SectionTitle>
+      </motion.div>
+      
       <FlexContainer>
         <FlexColumn>
           <motion.div variants={itemVariants}>
             <InfoCard>
               <CardHeader>
-                <CardTitle>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Person fontSize="small" color="primary" />
-                    Личная информация
-                  </Box>
-                </CardTitle>
+                <CardTitle>Персональная информация</CardTitle>
               </CardHeader>
               <CardContent>
-                {personalInfoItems.length > 0 ? (
-                  renderInfoItems(personalInfoItems)
-                ) : (
-                  <Typography color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                    Информация не заполнена
-                  </Typography>
-                )}
-              </CardContent>
-            </InfoCard>
-          </motion.div>
-
-          <motion.div variants={itemVariants}>
-            <InfoCard>
-              <CardHeader>
-                <CardTitle>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Badge fontSize="small" color="primary" />
-                    Аккаунт
-                  </Box>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {accountInfoItems.length > 0 ? (
-                  renderInfoItems(accountInfoItems)
-                ) : (
-                  <Typography color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                    Информация не заполнена
-                  </Typography>
-                )}
+                {renderInfoItems(personalInfoItems)}
               </CardContent>
             </InfoCard>
           </motion.div>
         </FlexColumn>
-
+        
         <FlexColumn>
           <motion.div variants={itemVariants}>
             <InfoCard>
               <CardHeader>
-                <CardTitle>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <EmojiEvents fontSize="small" color="primary" />
-                    Статистика участия
-                  </Box>
-                </CardTitle>
+                <CardTitle>Аккаунт и кошельки</CardTitle>
               </CardHeader>
               <CardContent>
-                {renderInfoItems(statisticsItems)}
+                {renderInfoItems(accountInfoItems)}
               </CardContent>
             </InfoCard>
           </motion.div>
         </FlexColumn>
       </FlexContainer>
+      
+      <motion.div variants={itemVariants}>
+        <SectionTitle>
+          Статистика
+        </SectionTitle>
+      </motion.div>
+      
+      <motion.div variants={itemVariants}>
+        <InfoCard>
+          <CardHeader>
+            <CardTitle>Статистика участия</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FlexContainer>
+              {userStatsItems.map((item, index) => (
+                <FlexColumn key={index} sx={{ flex: '1 1 20%', minWidth: '180px' }}>
+                  <InfoItemContainer>
+                    <IconBox>
+                      {item.icon}
+                    </IconBox>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">
+                        {item.title}
+                      </Typography>
+                      <Typography variant="subtitle1" fontWeight={700}>
+                        {item.value}
+                      </Typography>
+                    </Box>
+                  </InfoItemContainer>
+                </FlexColumn>
+              ))}
+            </FlexContainer>
+          </CardContent>
+        </InfoCard>
+      </motion.div>
     </motion.div>
   );
 };

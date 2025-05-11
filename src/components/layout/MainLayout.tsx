@@ -11,10 +11,12 @@ const MainContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   minHeight: '100vh',
-  width: '100vw',
+  width: '100%',
   position: 'relative',
-  overflow: 'hidden',
   backgroundColor: theme.palette.background.default,
+  [theme.breakpoints.up('md')]: {
+    overflow: 'auto',
+  },
 }));
 
 const ContentContainer = styled(Box)(({ theme }) => ({
@@ -28,15 +30,16 @@ const ContentContainer = styled(Box)(({ theme }) => ({
   paddingBottom: theme.spacing(7),
   [theme.breakpoints.down('sm')]: {
     paddingBottom: theme.spacing(8),
-    height: 'calc(var(--vh, 1vh) * 100 - 56px)',
-    minHeight: 'calc(var(--vh, 1vh) * 100 - 56px)',
-    maxHeight: 'calc(var(--vh, 1vh) * 100 - 56px)',
+  },
+  [theme.breakpoints.up('md')]: {
+    overflowY: 'auto',
+    minHeight: 'calc(100vh - 64px)',
   },
 }));
 
 const PageContainer = styled(Container)(({ theme }) => ({
   flex: 1,
-  paddingBottom: theme.spacing(14), // Увеличенный отступ снизу для нижней навигации
+  paddingBottom: theme.spacing(6),
   paddingTop: theme.spacing(1),
   maxWidth: theme.breakpoints.values.lg,
   position: 'relative',
@@ -44,7 +47,7 @@ const PageContainer = styled(Container)(({ theme }) => ({
 }));
 
 const BackgroundGradient = styled(Box)(({ theme }) => ({
-  position: 'fixed',
+  position: 'absolute',
   top: 0,
   left: 0,
   width: '100%',
@@ -54,7 +57,7 @@ const BackgroundGradient = styled(Box)(({ theme }) => ({
 }));
 
 const SecondaryGradient = styled(Box)(({ theme }) => ({
-  position: 'fixed',
+  position: 'absolute',
   bottom: 0,
   right: 0,
   width: '100%',
@@ -102,10 +105,6 @@ const MainLayout: React.FC = () => {
     const handleResize = () => {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100vw';
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -113,10 +112,6 @@ const MainLayout: React.FC = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
     };
   }, []);
 
@@ -135,20 +130,12 @@ const MainLayout: React.FC = () => {
           exit="out"
           variants={pageVariants}
           transition={pageTransition}
-          style={{ flex: 1 }}
+          style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'visible' }}
         >
           <ContentContainer>
-            <Container 
-              maxWidth="lg" 
-              sx={{ 
-                flexGrow: 1, 
-                py: { xs: 1, sm: 2 },
-                px: { xs: 1, sm: 2 },
-                width: '100%'
-              }}
-            >
+            <PageContainer>
               <Outlet />
-            </Container>
+            </PageContainer>
           </ContentContainer>
         </motion.div>
       </AnimatePresence>

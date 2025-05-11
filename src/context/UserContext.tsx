@@ -25,6 +25,7 @@ interface UserContextType {
   isSuperAdmin: boolean;
   isCompanyAdmin: boolean;
   adminCompanyId: string | undefined;
+  isRegistered: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -44,7 +45,8 @@ export const UserProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isCompanyAdmin, setIsCompanyAdmin] = useState(false);
   const [adminCompanyId, setAdminCompanyId] = useState<string | undefined>(undefined);
-  const [telegramAuthAttempted, setTelegramAuthAttempted] = useState(false); 
+  const [telegramAuthAttempted, setTelegramAuthAttempted] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
 
   // Получение данных Telegram из window.Telegram.WebApp.initDataUnsafe
   const getTelegramData = (): TelegramUser | null => {
@@ -70,6 +72,7 @@ export const UserProvider: React.FC<{children: React.ReactNode}> = ({ children }
       setIsSuperAdmin(false);
       setIsCompanyAdmin(false);
       setAdminCompanyId(undefined);
+      setIsRegistered(false);
       return;
     }
 
@@ -79,6 +82,9 @@ export const UserProvider: React.FC<{children: React.ReactNode}> = ({ children }
     setIsSuperAdmin(role === 'superadmin');
     setIsCompanyAdmin(role === 'admin' && !!userProfile.companyId);
     setAdminCompanyId(userProfile.companyId);
+
+    // Проверяем статус регистрации
+    setIsRegistered(!!userProfile.registered && !!userProfile.city);
 
     // Сохраняем ID текущего пользователя для компонента AdminsManager
     // (чтобы предотвратить удаление своей учетной записи)
@@ -138,7 +144,8 @@ export const UserProvider: React.FC<{children: React.ReactNode}> = ({ children }
         telegramId: tgUser.id.toString(),
         username: tgUser.username,
         createdAt: new Date(),
-        lastLogin: new Date()
+        lastLogin: new Date(),
+        registered: false // Пользователь ещё не прошёл полную регистрацию
       };
       
       await createOrUpdateUserProfile(newUser.uid, profileData);
@@ -188,7 +195,8 @@ export const UserProvider: React.FC<{children: React.ReactNode}> = ({ children }
             const profileData: Partial<User> = {
               id: firebaseUser.uid,
               displayName: 'Гость',
-              createdAt: new Date()
+              createdAt: new Date(),
+              registered: false
             };
             await createOrUpdateUserProfile(firebaseUser.uid, profileData);
             const newProfile = await getUserProfile(firebaseUser.uid);
@@ -251,11 +259,12 @@ export const UserProvider: React.FC<{children: React.ReactNode}> = ({ children }
       profile, 
       loading, 
       error, 
-      refreshProfile,
-      isAdmin,
-      isSuperAdmin,
-      isCompanyAdmin,
-      adminCompanyId
+      refreshProfile, 
+      isAdmin, 
+      isSuperAdmin, 
+      isCompanyAdmin, 
+      adminCompanyId,
+      isRegistered
     }}>
       {children}
     </UserContext.Provider>

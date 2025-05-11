@@ -118,4 +118,63 @@ export const applyTelegramStyles = (): void => {
   } catch (error) {
     console.error('Ошибка при применении стилей Telegram:', error);
   }
+};
+
+/**
+ * Открывает TON Wallet напрямую или через глубокую ссылку
+ * @param {string} callbackUrl URL, на который будет перенаправлен пользователь после операции
+ * @returns {boolean} true, если удалось выполнить операцию
+ */
+export const openTonWallet = (callbackUrl: string): boolean => {
+  try {
+    console.log('Trying to open TON wallet with callback:', callbackUrl);
+    
+    // Проверяем доступность метода openTonWallet
+    if (window.Telegram?.WebApp && typeof (window.Telegram.WebApp as any).openTonWallet === 'function') {
+      console.log('Using direct openTonWallet method');
+      
+      (window.Telegram.WebApp as any).openTonWallet({
+        callback_url: callbackUrl
+      });
+      
+      return true;
+    }
+    
+    // Попытка использовать глубокую ссылку через метод openLink
+    if (window.Telegram?.WebApp && typeof (window.Telegram.WebApp as any).openLink === 'function') {
+      console.log('Using openLink with TON deep link');
+      
+      const tonDeepLink = `ton://transfer/?callback_url=${encodeURIComponent(callbackUrl)}`;
+      (window.Telegram.WebApp as any).openLink(tonDeepLink);
+      
+      return true;
+    }
+    
+    console.warn('No suitable method found to open TON wallet');
+    return false;
+  } catch (error) {
+    console.error('Error opening TON wallet:', error);
+    return false;
+  }
+};
+
+/**
+ * Проверяет поддерживает ли текущий Telegram WebApp работу с TON кошельком
+ * @returns {boolean} true, если поддерживается работа с TON
+ */
+export const isTonWalletSupported = (): boolean => {
+  try {
+    if (!window.Telegram?.WebApp) return false;
+    
+    // Проверяем доступность прямого метода
+    const hasOpenTonWallet = typeof (window.Telegram.WebApp as any).openTonWallet === 'function';
+    
+    // Проверяем возможность использования глубоких ссылок
+    const hasOpenLink = typeof (window.Telegram.WebApp as any).openLink === 'function';
+    
+    return hasOpenTonWallet || hasOpenLink;
+  } catch (error) {
+    console.error('Error checking TON wallet support:', error);
+    return false;
+  }
 }; 

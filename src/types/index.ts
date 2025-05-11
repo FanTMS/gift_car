@@ -257,4 +257,5 @@ export interface User {
     rafflesWon: number;
     ticketsBought: number;
   };
+  registered?: boolean; // Флаг, указывающий на завершенную регистрацию
 } 

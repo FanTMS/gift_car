@@ -66,8 +66,46 @@
       window.addEventListener('orientationchange', setAppHeight);
       setAppHeight();
     </script>
+    <!-- Скрипт Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- TonConnect и TON Web -->
+    <script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    
+    <!-- Bitget Wallet поддержка для TON Connect в Telegram -->
+    <script>
+      // Проверка наличия Telegram Mini App
+      function isTelegramWebApp() {
+        return window.Telegram && window.Telegram.WebApp;
+      }
+      
+      // Проверка наличия Bitget Wallet и помощь TonConnect
+      function setupTonConnect() {
+        if (isTelegramWebApp()) {
+          console.log('Telegram WebApp detected, setting up TON wallet support');
+          
+          // Добавляем Bitget Wallet интеграцию
+          window.BitgetWalletConfig = {
+            // Указываем, что это Telegram Mini App
+            isTelegram: true,
+            
+            // Разрешаем перенаправления в приложении
+            enableRedirect: true,
+            
+            // Обработчик для подключения TON кошелька
+            setupWalletConnection: function() {
+              console.log("Bitget Wallet setup completed");
+            }
+          };
+        }
+      }
+      
+      // Запускаем настройку после загрузки основных скриптов
+      document.addEventListener('DOMContentLoaded', setupTonConnect);
+    </script>
   </head>
-  <body class="no-bounce ios-fix">
+  <body class="ios-fix">
     <noscript>Для работы приложения необходим JavaScript.</noscript>
     <div id="root" class="full-height"></div>
     <!--

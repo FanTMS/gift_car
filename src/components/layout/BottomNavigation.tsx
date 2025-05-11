@@ -285,11 +285,21 @@ const BottomNavigationBar: React.FC = () => {
     }
   };
   
-  if (!mounted || isTelegramMiniApp) return null;
+  // Только ждем монтирования, но НЕ скрываем в Telegram Mini App
+  if (!mounted) return null;
   
   return (
     <StyledBottomNavigation
       elevation={3}
+      sx={{
+        // Добавляем специальные стили для Telegram Mini App
+        ...(isTelegramMiniApp && {
+          background: theme.palette.mode === 'dark' 
+            ? 'rgba(18, 18, 18, 0.92)' 
+            : 'rgba(255, 255, 255, 0.92)',
+          boxShadow: '0px -1px 5px rgba(0, 0, 0, 0.12)',
+        })
+      }}
     >
       <BottomNavigation
         value={getActiveTab()}
