@@ -28,19 +28,21 @@ const StyledTabs = styled(Tabs)(({ theme }) => ({
 
 const TabsContainer = styled(Box)(({ theme }) => ({
   borderRadius: theme.spacing(3),
-  background: theme.palette.background.paper,
+  background: alpha(theme.palette.background.paper, 0.8),
   position: 'relative',
-  padding: theme.spacing(0.5),
-  boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.08)}`,
+  padding: theme.spacing(0.7),
+  boxShadow: `0 8px 20px ${alpha(theme.palette.common.black, 0.07)}`,
+  backdropFilter: 'blur(10px)',
   display: 'flex',
-  overflow: 'visible'
+  overflow: 'visible',
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
 }));
 
 const TabIndicator = styled(motion.div)(({ theme }) => ({
   position: 'absolute',
   borderRadius: theme.spacing(2.5),
   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-  boxShadow: `0 6px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
+  boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
   zIndex: 0,
   transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
 }));
@@ -50,8 +52,8 @@ const StyledTab = styled(Tab)(({ theme }) => ({
   color: theme.palette.text.secondary,
   textTransform: 'none',
   fontWeight: 600,
-  fontSize: '0.9rem',
-  padding: theme.spacing(1.5, 3),
+  fontSize: '0.95rem',
+  padding: theme.spacing(1.8, 3),
   minHeight: 'auto',
   borderRadius: theme.spacing(2.5),
   transition: 'all 0.3s ease',
@@ -61,12 +63,24 @@ const StyledTab = styled(Tab)(({ theme }) => ({
   '& .MuiTab-iconWrapper': {
     marginRight: theme.spacing(1),
     marginBottom: '0 !important',
+    transition: 'transform 0.2s ease',
+  },
+  '&:hover': {
+    color: theme.palette.text.primary,
+    backgroundColor: alpha(theme.palette.primary.main, 0.05),
+    '& .MuiTab-iconWrapper': {
+      transform: 'scale(1.1)',
+    },
+  },
+  '&.Mui-selected:hover': {
+    color: theme.palette.common.white,
+    backgroundColor: 'transparent',
   },
   [theme.breakpoints.down('sm')]: {
-    fontSize: '0.8rem',
-    padding: theme.spacing(1, 1.5),
+    fontSize: '0.85rem',
+    padding: theme.spacing(1.2, 2),
     '& .MuiTab-iconWrapper': {
-      marginRight: theme.spacing(0.5),
+      marginRight: theme.spacing(0.7),
     },
   },
 }));

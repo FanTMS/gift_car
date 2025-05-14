@@ -24,8 +24,12 @@ import {
   Tabs,
   Avatar,
   Container,
-  Grid
+  SwipeableDrawer,
+  useMediaQuery,
+  Badge
 } from '@mui/material';
+import { TransitionProps } from '@mui/material/transitions';
+import Slide from '@mui/material/Slide';
 import {
   AccountBalanceWallet,
   AddCircleOutline,
@@ -39,7 +43,11 @@ import {
   CreditCard,
   LocalAtm,
   Telegram,
-  ReceiptLong
+  ReceiptLong,
+  CheckCircleOutline,
+  ErrorOutline,
+  AccessTime,
+  MoreHoriz
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
@@ -56,31 +64,38 @@ import TonConnectComponent from '../components/wallet/TonConnectComponent';
 import { TonPaymentService } from '../services/payment/TonPaymentService';
 import TonConnectService from '../services/TonConnectService';
 
-// Константа с base64 иконкой TON
+// TON logo in base64
 const tonLogoBase64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwIDQwQzMxLjA0NTcgNDAgNDAgMzEuMDQ1NyA0MCAyMEM0MCA4Ljk1NDMgMzEuMDQ1NyAwIDIwIDBDOC45NTQzIDAgMCA4Ljk1NDMgMCAyMEMwIDMxLjA0NTcgOC45NTQzIDQwIDIwIDQwWiIgZmlsbD0iIzAzODhDQyIvPgo8cGF0aCBkPSJNMTYuNjA5MSAxOS41ODIzTDI1LjEyNTIgMTYuMDIzOUwyMS45Njc1IDI0LjIzMDVMMTYuNjA5MSAxOS41ODIzWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE2LjYwOTEgMTkuNTgyMkwyMC43NzAzIDEzLjMwNDdMMjUuMTI1MSAxNi4wMjM5TDE2LjYwOTEgMTkuNTgyMloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMy45MTAyIDI2LjA4NjNMMTYuNjA5MSAxOS41ODIzTDIxLjk2NzUgMjQuMjMwNUwxMy45MTAyIDI2LjA4NjNaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTMuOTEwMiAyNi4wODYzTDEzLjc3NzMgMTguMjg5NkwxNi42MDkxIDE5LjU4MjNMMTMuOTEwMiAyNi4wODYzWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE2LjYwOTEgMTkuNTgyM0wxMy43NzczIDE4LjI4OTZMMjAuNzcwMyAxMy4zMDQ3TDE2LjYwOTEgMTkuNTgyM1oiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
 
-// Стилизованные компоненты с современным дизайном
+// Modern styled components with adaptive design
 const WalletContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(4),
+  paddingTop: theme.spacing(2),
   paddingBottom: theme.spacing(10),
   maxWidth: '100%',
+  [theme.breakpoints.up('sm')]: {
+    paddingTop: theme.spacing(4),
+  },
 }));
 
 const WalletCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3.5),
-  borderRadius: theme.spacing(4),
-  background: theme.palette.mode === 'light'
-    ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.dark, 0.95)} 100%)`
-    : `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.95)} 0%, ${alpha(theme.palette.primary.main, 0.8)} 100%)`,
+  padding: theme.spacing(3),
+  borderRadius: theme.spacing(3),
+  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.dark, 0.95)} 100%)`,
   color: theme.palette.common.white,
   position: 'relative',
   overflow: 'hidden',
-  boxShadow: theme.palette.mode === 'light'
-    ? '0 15px 35px rgba(0, 82, 204, 0.2), 0 5px 15px rgba(0, 0, 0, 0.05)'
-    : '0 15px 35px rgba(16, 55, 117, 0.4), 0 5px 15px rgba(0, 0, 0, 0.1)',
-  marginBottom: theme.spacing(4),
+  boxShadow: '0 10px 30px rgba(0, 82, 204, 0.2), 0 5px 15px rgba(0, 0, 0, 0.05)',
+  marginBottom: theme.spacing(3),
   display: 'flex',
   flexDirection: 'column',
+  height: '100%',
+  minHeight: 180,
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2.5),
+    borderRadius: theme.spacing(2.5),
+    marginBottom: theme.spacing(2),
+    minHeight: 150,
+  },
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -96,20 +111,27 @@ const WalletCard = styled(Paper)(({ theme }) => ({
 }));
 
 const BalanceTextWrapper = styled(Box)(({ theme }) => ({
-  fontSize: '2.5rem',
+  fontSize: '2.25rem',
   fontWeight: 700,
   display: 'flex',
   alignItems: 'center',
   marginTop: theme.spacing(1),
+  flexWrap: 'wrap',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1.75rem',
+  },
   '& .currency': {
-    fontSize: '1.6rem',
+    fontSize: '1.5rem',
     opacity: 0.8,
     marginLeft: theme.spacing(0.5),
-    alignSelf: 'flex-start'
+    alignSelf: 'flex-start',
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '1.25rem',
+    },
   }
 }));
 
-const CardPattern = styled(Box)(({ theme }) => ({
+const CardPattern = styled(Box)(() => ({
   position: 'absolute',
   bottom: 0,
   right: 0,
@@ -119,7 +141,7 @@ const CardPattern = styled(Box)(({ theme }) => ({
   zIndex: 0,
 }));
 
-const CardCircle = styled(Box)(({ theme }) => ({
+const CardCircle = styled(Box)(() => ({
   position: 'absolute',
   top: '-50px',
   right: '-50px',
@@ -130,7 +152,7 @@ const CardCircle = styled(Box)(({ theme }) => ({
   zIndex: 0,
 }));
 
-const CardCircleSmall = styled(Box)(({ theme }) => ({
+const CardCircleSmall = styled(Box)(() => ({
   position: 'absolute',
   bottom: '-30px',
   left: '20px',
@@ -145,8 +167,8 @@ const WalletIcon = styled(Box)(({ theme }) => ({
   position: 'absolute',
   top: 20,
   right: 20,
-  width: 48,
-  height: 48,
+  width: 44,
+  height: 44,
   borderRadius: '50%',
   backgroundColor: 'rgba(255,255,255,0.15)',
   display: 'flex',
@@ -154,41 +176,59 @@ const WalletIcon = styled(Box)(({ theme }) => ({
   justifyContent: 'center',
   zIndex: 1,
   backdropFilter: 'blur(5px)',
+  [theme.breakpoints.down('sm')]: {
+    width: 38,
+    height: 38,
+    top: 16,
+    right: 16,
+  },
   '& svg': {
     color: 'white',
-    fontSize: 24,
+    fontSize: 22,
+    [theme.breakpoints.down('sm')]: {
+      fontSize: 20,
+    },
   }
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
-  borderRadius: theme.spacing(6),
-  padding: theme.spacing(1.5, 4),
+  borderRadius: theme.spacing(5),
+  padding: theme.spacing(1.25, 3),
   fontWeight: 600,
   textTransform: 'none',
-  boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+  boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
   transition: 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
   fontSize: '0.95rem',
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(1, 2),
+    fontSize: '0.875rem',
+  },
   '&:hover': {
-    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-    transform: 'translateY(-4px)',
+    boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
+    transform: 'translateY(-2px)',
   }
 }));
 
-const TransactionsList = styled(Box)(({ theme }) => ({
+const TransactionsList = styled(Paper)(({ theme }) => ({
   background: theme.palette.background.paper,
-  borderRadius: theme.spacing(4),
+  borderRadius: theme.spacing(3),
   overflow: 'hidden',
-  boxShadow: theme.palette.mode === 'light'
-    ? '0 5px 25px rgba(0, 0, 0, 0.05)'
-    : '0 5px 25px rgba(0, 0, 0, 0.1)',
-  marginTop: theme.spacing(4),
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+  marginTop: theme.spacing(3),
+  [theme.breakpoints.down('sm')]: {
+    borderRadius: theme.spacing(2.5),
+    marginTop: theme.spacing(2),
+  },
 }));
 
 const TransactionItem = styled(ListItem)(({ theme }) => ({
-  padding: theme.spacing(2.5, 3),
+  padding: theme.spacing(2),
   borderBottom: `1px solid ${alpha(theme.palette.divider, 0.07)}`,
   transition: 'all 0.2s ease',
   cursor: 'pointer',
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(2, 3),
+  },
   '&:last-child': {
     borderBottom: 'none',
   },
@@ -198,11 +238,16 @@ const TransactionItem = styled(ListItem)(({ theme }) => ({
 }));
 
 const TransactionIcon = styled(Avatar)(({ theme }) => ({
-  width: 48,
-  height: 48,
+  width: 42,
+  height: 42,
   backgroundColor: alpha(theme.palette.primary.main, 0.12),
   color: theme.palette.primary.main,
   marginRight: theme.spacing(2),
+  [theme.breakpoints.down('sm')]: {
+    width: 38,
+    height: 38,
+    marginRight: theme.spacing(1.5),
+  },
   '&.deposit': {
     backgroundColor: alpha(theme.palette.success.main, 0.12),
     color: theme.palette.success.main,
@@ -215,6 +260,7 @@ const TransactionIcon = styled(Avatar)(({ theme }) => ({
 
 const TransactionAmount = styled(Typography)(({ theme }) => ({
   fontWeight: 700,
+  fontSize: '0.95rem',
   display: 'flex',
   alignItems: 'center',
   '&.deposit': {
@@ -227,23 +273,31 @@ const TransactionAmount = styled(Typography)(({ theme }) => ({
 
 const StatusChip = styled(Chip)(({ theme }) => ({
   borderRadius: theme.spacing(1),
-  fontSize: '0.75rem',
-  height: 24,
+  fontSize: '0.7rem',
+  height: 22,
   fontWeight: 600,
+  [theme.breakpoints.up('sm')]: {
+    fontSize: '0.75rem',
+    height: 24,
+  },
 }));
 
 const StyledTabs = styled(Tabs)(({ theme }) => ({
-  marginBottom: theme.spacing(3),
   '& .MuiTabs-indicator': {
-    height: 4,
-    borderRadius: 4,
+    height: 3,
+    borderRadius: 3,
     backgroundColor: theme.palette.primary.main,
   },
   '& .MuiTab-root': {
     textTransform: 'none',
     fontWeight: 600,
-    fontSize: '0.95rem',
-    padding: theme.spacing(1.5, 3),
+    fontSize: '0.9rem',
+    minHeight: 48,
+    padding: theme.spacing(1.2, 2),
+    [theme.breakpoints.up('sm')]: {
+      fontSize: '0.95rem',
+      padding: theme.spacing(1.5, 2.5),
+    },
     '&.Mui-selected': {
       color: theme.palette.primary.main,
     }
@@ -255,12 +309,18 @@ const EmptyStateBox = styled(Box)(({ theme }) => ({
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  padding: theme.spacing(6),
+  padding: theme.spacing(4),
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(6),
+  },
   textAlign: 'center',
   '& svg': {
-    fontSize: 64,
+    fontSize: 56,
     marginBottom: theme.spacing(2),
     color: alpha(theme.palette.text.secondary, 0.5),
+    [theme.breakpoints.up('sm')]: {
+      fontSize: 64,
+    },
   }
 }));
 
@@ -270,21 +330,35 @@ const TopupDialog = styled(Dialog)(({ theme }) => ({
     padding: theme.spacing(2),
     maxWidth: 480,
     width: '100%',
+    margin: theme.spacing(2),
+    [theme.breakpoints.down('sm')]: {
+      margin: theme.spacing(1),
+      maxWidth: 'calc(100% - 32px)',
+    },
   }
 }));
 
 const DialogHeader = styled(DialogTitle)(({ theme }) => ({
-  padding: theme.spacing(3, 3, 2),
+  padding: theme.spacing(2, 2, 1),
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(3, 3, 2),
+  },
   '& .MuiTypography-root': {
     fontWeight: 700,
-    fontSize: '1.25rem',
+    fontSize: '1.2rem',
+    [theme.breakpoints.up('sm')]: {
+      fontSize: '1.25rem',
+    },
   }
 }));
 
 const AmountButton = styled(Button)(({ theme }) => ({
   borderRadius: theme.spacing(1.5),
   margin: theme.spacing(0.5),
-  padding: theme.spacing(1, 3),
+  padding: theme.spacing(0.75, 2),
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(1, 3),
+  },
   fontWeight: 600,
   textTransform: 'none',
   border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
@@ -295,7 +369,28 @@ const AmountButton = styled(Button)(({ theme }) => ({
   }
 }));
 
-// Интерфейсы для типизации
+const TonConnectPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2.5),
+  borderRadius: theme.spacing(3),
+  background: alpha(theme.palette.primary.light, 0.08),
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+  marginBottom: theme.spacing(3),
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  minHeight: 180,
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(3),
+    borderRadius: theme.spacing(3),
+    minHeight: 180,
+  },
+  [theme.breakpoints.down('sm')]: {
+    minHeight: 150,
+  },
+}));
+
+// Transaction interface
 interface Transaction {
   id: string;
   type: 'deposit' | 'purchase';
@@ -305,6 +400,15 @@ interface Transaction {
   description: string;
   paymentMethod?: PaymentMethod;
 }
+
+const SlideTransition = React.forwardRef(function Transition(
+  props: TransitionProps & {
+    children: React.ReactElement;
+  },
+  ref: React.Ref<unknown>,
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 const WalletPage: React.FC = () => {
   const theme = useTheme();
@@ -327,22 +431,22 @@ const WalletPage: React.FC = () => {
   const [tonTopupAmount, setTonTopupAmount] = useState<string>('');
   const [isProcessingTonPayment, setIsProcessingTonPayment] = useState<boolean>(false);
   const [tonPaymentError, setTonPaymentError] = useState<string | null>(null);
-  const [tonToRubRate, setTonToRubRate] = useState<number>(270); // Примерный курс TON к рублю
-
-  // Проверяем, запущено ли приложение в Telegram и статус подключения TON
+  const [tonToRubRate, setTonToRubRate] = useState<number>(270); // Approximate TON to RUB rate
+  
+  // Check if the app is running in Telegram
   useEffect(() => {
     const checkTelegramWebApp = () => {
-      // @ts-ignore - игнорируем ошибки TypeScript для Telegram API
+      // @ts-ignore - ignore TypeScript errors for Telegram API
       const isTelegram = Boolean(window?.Telegram?.WebApp);
       setIsTelegramMiniApp(isTelegram);
       
-      // Если в телеграм, проверяем подключение TON кошелька
+      // If in Telegram, check TON wallet connection
       if (isTelegram && user) {
         try {
-          // Используем централизованный сервис для проверки подключения
+          // Use centralized service to check connection
           const tonConnectService = TonConnectService.getInstance();
           
-          // Если уже подключен, получаем адрес
+          // If already connected, get address
           if (tonConnectService.isConnected()) {
             const address = tonConnectService.getWalletAddress();
             if (address) {
@@ -359,21 +463,21 @@ const WalletPage: React.FC = () => {
     checkTelegramWebApp();
   }, [user]);
 
-  // Загружаем баланс и транзакции
+  // Load balance and transactions
   useEffect(() => {
     const fetchWalletData = async () => {
       try {
         setLoading(true);
         
         if (user) {
-          // Здесь получаем данные о балансе пользователя из Firebase
+          // Get user balance data from Firebase
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
             const userData = userDoc.data();
             setBalance(userData.balance || 0);
           }
 
-          // Получаем транзакции пользователя из Firebase
+          // Get user transactions from Firebase
           const q = query(
             collection(db, 'transactions'),
             where('userId', '==', user.uid),
@@ -384,7 +488,7 @@ const WalletPage: React.FC = () => {
           const transactionsData = transactionsSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
-            date: doc.data().date?.toDate() || new Date() // Преобразуем Timestamp в Date
+            date: doc.data().date?.toDate() || new Date() // Convert Timestamp to Date
           })) as Transaction[];
           
           setTransactions(transactionsData);
@@ -399,7 +503,7 @@ const WalletPage: React.FC = () => {
     fetchWalletData();
   }, [user]);
 
-  // Обработчики для диалога пополнения
+  // Topup dialog handlers
   const handleOpenTopupDialog = () => {
     setOpenTopupDialog(true);
     setTopupAmount('');
@@ -410,13 +514,13 @@ const WalletPage: React.FC = () => {
     setOpenTopupDialog(false);
   };
 
-  // Показываем опцию TON только если кошелек подключен и мы в Telegram Mini App
+  // Show TON option only if wallet is connected and we're in Telegram Mini App
   const showTonOption = tonWalletConnected && isTelegramMiniApp;
 
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     setPaymentMethod(method);
     
-    // Если выбран TON кошелек, открываем специальный диалог
+    // If TON wallet is selected, open special dialog
     if (method === 'ton_wallet') {
       handleCloseTopupDialog();
       setTimeout(() => {
@@ -437,14 +541,14 @@ const WalletPage: React.FC = () => {
     try {
       const amount = parseFloat(topupAmount);
       
-      // Получаем ID телеграм-пользователя, если мини-приложение запущено через Telegram
+      // Get Telegram user ID if mini-app is launched through Telegram
       let additionalMetadata = { operation: 'wallet_topup' };
       
-      // Если это телеграм-приложение и выбран способ оплаты через Telegram
+      // If this is a Telegram app and Telegram payment method is selected
       if (isTelegramMiniApp && paymentMethod === 'telegram_wallet') {
-        // @ts-ignore - игнорируем ошибки TypeScript для Telegram API
+        // @ts-ignore - ignore TypeScript errors for Telegram API
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-          // @ts-ignore - игнорируем ошибки TypeScript для Telegram API
+          // @ts-ignore - ignore TypeScript errors for Telegram API
           additionalMetadata.telegramUserId = window.Telegram.WebApp.initDataUnsafe.user.id.toString();
         }
       }
@@ -461,7 +565,7 @@ const WalletPage: React.FC = () => {
         setPaymentError(result.error || 'Ошибка при инициализации платежа');
         setIsProcessingPayment(false);
       }
-      // Для успешных платежей перенаправление происходит в самом сервисе processPayment
+      // For successful payments, redirection happens in the processPayment service
       
     } catch (error) {
       console.error('Payment error:', error);
@@ -470,33 +574,33 @@ const WalletPage: React.FC = () => {
     }
   };
 
-  // Предопределенные суммы для быстрого пополнения
+  // Predefined amounts for quick topup
   const quickAmounts = [500, 1000, 3000, 5000];
 
-  // Обработчик изменения вкладки
+  // Tab change handler
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
-  // Анимационные варианты для карточки
+  // Animation variants for card
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
       opacity: 1, 
       y: 0,
-      transition: { duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }
+      transition: { duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }
     }
   };
 
-  // Фильтрация транзакций в зависимости от выбранной вкладки
+  // Filter transactions based on selected tab
   const filteredTransactions = transactions.filter(transaction => {
-    if (tabValue === 0) return true; // Все транзакции
-    if (tabValue === 1) return transaction.type === 'deposit'; // Только пополнения
-    if (tabValue === 2) return transaction.type === 'purchase'; // Только покупки
+    if (tabValue === 0) return true; // All transactions
+    if (tabValue === 1) return transaction.type === 'deposit'; // Deposits only
+    if (tabValue === 2) return transaction.type === 'purchase'; // Purchases only
     return true;
   });
 
-  // Обработчики для TonConnect
+  // TonConnect handlers
   const handleTonWalletConnected = (walletAddress: string) => {
     console.log('TON wallet connected:', walletAddress);
     setTonWalletConnected(true);
@@ -509,7 +613,7 @@ const WalletPage: React.FC = () => {
     setTonWalletError(error);
   };
 
-  // Обработчики для TON топапа
+  // TON topup handlers
   const handleOpenTonTopupDialog = () => {
     setOpenTonTopupDialog(true);
     setTonTopupAmount('');
@@ -520,13 +624,13 @@ const WalletPage: React.FC = () => {
     setOpenTonTopupDialog(false);
   };
 
-  // Функция для конвертации TON в рубли
+  // Function to convert TON to rubles
   const calculateRubAmount = (tonAmount: string): number => {
     const amountTon = parseFloat(tonAmount) || 0;
     return Math.floor(amountTon * tonToRubRate);
   };
 
-  // Обработчик пополнения через TON
+  // TON payment handler
   const handleProcessTonPayment = async () => {
     if (!tonTopupAmount || isNaN(parseFloat(tonTopupAmount)) || parseFloat(tonTopupAmount) <= 0) {
       setTonPaymentError('Пожалуйста, введите корректную сумму');
@@ -543,17 +647,17 @@ const WalletPage: React.FC = () => {
       
       const amountTon = parseFloat(tonTopupAmount);
       
-      // Проверяем, подключен ли TON кошелек
+      // Check if TON wallet is connected
       if (!tonWalletConnected) {
         throw new Error('TON кошелек не подключен');
       }
       
-      // Отправляем TON транзакцию
+      // Send TON transaction
       const result = await TonPaymentService.topUpBalance(user.uid, amountTon);
       
       if (result.success) {
         setOpenTonTopupDialog(false);
-        // Обновляем данные на странице
+        // Update page data
         window.location.reload();
       } else {
         setTonPaymentError(result.error || 'Ошибка при обработке TON транзакции');
@@ -566,149 +670,168 @@ const WalletPage: React.FC = () => {
     }
   };
 
-  // Предопределенные суммы для быстрого пополнения в TON
+  // Predefined amounts for quick topup in TON
   const quickTonAmounts = [0.1, 0.5, 1, 5];
+  
+  // Check if screen is mobile size
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Get appropriate status icon based on transaction status
+  const getStatusIcon = (status: string) => {
+    switch(status) {
+      case 'completed':
+        return <CheckCircleOutline fontSize="small" />;
+      case 'pending':
+        return <AccessTime fontSize="small" />;
+      case 'failed':
+        return <ErrorOutline fontSize="small" />;
+      default:
+        return <MoreHoriz fontSize="small" />;
+    }
+  };
 
   return (
-    <WalletContainer>
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={cardVariants}
-      >
-        <WalletCard elevation={6}>
-          <CardPattern />
-          <CardCircle />
-          <CardCircleSmall />
-          <WalletIcon>
-            <AccountBalanceWallet />
-          </WalletIcon>
-          
-          <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Typography variant="h6" fontWeight={600} sx={{ opacity: 0.95, mb: 1 }}>
-              Ваш баланс
-            </Typography>
-            
-            <BalanceTextWrapper>
-              {new Intl.NumberFormat('ru-RU', {
-                maximumFractionDigits: 0
-              }).format(balance)}
-              <span className="currency">₽</span>
-            </BalanceTextWrapper>
-            
-            <Box sx={{ display: 'flex', mt: 3 }}>
-              <ActionButton
-                variant="contained"
-                color="secondary"
-                startIcon={<AddCircleOutline />}
-                onClick={handleOpenTopupDialog}
-                fullWidth
-                sx={{ mr: 2, backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
-              >
-                Пополнить
-              </ActionButton>
+    <WalletContainer maxWidth="md">
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -1 }}>
+        <Box sx={{ width: '100%', px: 1, mb: 2, flexBasis: { xs: '100%', md: '50%' }, height: '100%' }}>
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={cardVariants}
+            style={{ height: '100%' }}
+          >
+            <WalletCard elevation={6}>
+              <CardPattern />
+              <CardCircle />
+              <CardCircleSmall />
+              <WalletIcon>
+                <AccountBalanceWallet />
+              </WalletIcon>
               
-              <ActionButton
-                variant="contained"
-                color="primary"
-                sx={{ backgroundColor: 'white', color: theme.palette.primary.main }}
-                startIcon={<Receipt />}
-                fullWidth
-                onClick={() => navigate('/wallet/history')}
-              >
-                История
-              </ActionButton>
-            </Box>
-          </Box>
-        </WalletCard>
-      </motion.div>
-      
-      {/* Секция для TON кошелька */}
-      {isTelegramMiniApp && (
-        <Box sx={{ mt: 4, mb: 4 }}>
-          {tonWalletConnected ? (
-            <Paper 
-              elevation={2} 
-              sx={{ 
-                p: 3, 
-                borderRadius: 4, 
-                background: alpha(theme.palette.primary.light, 0.08),
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" fontWeight={600} sx={{ opacity: 0.95, mb: 0.5 }}>
+                  Ваш баланс
+                </Typography>
+                
+                <BalanceTextWrapper>
+                  {new Intl.NumberFormat('ru-RU', {
+                    maximumFractionDigits: 0
+                  }).format(balance)}
+                  <span className="currency">₽</span>
+                </BalanceTextWrapper>
+                
+                <Box sx={{ display: 'flex', mt: 'auto', pt: 2 }}>
+                  <ActionButton
+                    variant="contained"
+                    color="secondary"
+                    startIcon={!isMobile && <AddCircleOutline />}
+                    onClick={handleOpenTopupDialog}
+                    fullWidth
+                    sx={{ mr: 2, backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                  >
+                    {isMobile ? <AddCircleOutline /> : 'Пополнить'}
+                  </ActionButton>
+                  
+                  <ActionButton
+                    variant="contained"
+                    color="primary"
+                    sx={{ backgroundColor: 'white', color: theme.palette.primary.main }}
+                    startIcon={!isMobile && <Receipt />}
+                    fullWidth
+                    onClick={() => navigate('/wallet/history')}
+                  >
+                    {isMobile ? <Receipt /> : 'История'}
+                  </ActionButton>
+                </Box>
+              </Box>
+            </WalletCard>
+          </motion.div>
+        </Box>
+        
+        {isTelegramMiniApp && (
+          <Box sx={{ width: '100%', px: 1, mb: 2, flexBasis: { xs: '100%', md: '50%' }, height: '100%' }}>
+            {tonWalletConnected ? (
+              <TonConnectPaper>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'flex-start', 
+                  justifyContent: 'space-between', 
+                  flexWrap: 'wrap', 
+                  gap: 1,
+                  height: '100%'
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Avatar 
                       sx={{ 
                         bgcolor: alpha(theme.palette.primary.main, 0.1), 
                         color: theme.palette.primary.main, 
-                        width: 32, 
-                        height: 32, 
-                        mr: 1 
+                        width: 38, 
+                        height: 38, 
+                        mr: 1.5
                       }}
                     >
                       <img 
                         src={tonLogoBase64} 
                         alt="TON" 
-                        style={{ width: 18, height: 18 }} 
+                        style={{ width: 20, height: 20 }} 
                       />
                     </Avatar>
-                    TON Кошелек подключен
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
-                    {tonWalletAddress && `${tonWalletAddress.slice(0, 6)}...${tonWalletAddress.slice(-6)}`}
-                  </Typography>
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        TON Кошелек
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', wordBreak: 'break-all' }}>
+                        {tonWalletAddress && `${tonWalletAddress.slice(0, 6)}...${tonWalletAddress.slice(-6)}`}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ mt: 'auto', display: 'flex', width: '100%', justifyContent: 'center', pt: 2 }}>
+                    <ActionButton
+                      variant="outlined"
+                      color="primary"
+                      onClick={handleOpenTonTopupDialog}
+                      startIcon={<AddCircleOutline />}
+                      sx={{ 
+                        borderRadius: theme.spacing(5),
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        width: '100%',
+                        maxWidth: '250px'
+                      }}
+                    >
+                      {isMobile ? 'Пополнить TON' : 'Пополнить через TON'}
+                    </ActionButton>
+                  </Box>
                 </Box>
-                <Box>
-                  <Chip 
-                    label="Подключен" 
-                    color="success" 
-                    size="small" 
-                    sx={{ fontWeight: 600, mb: 1 }}
-                  />
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    onClick={handleOpenTonTopupDialog}
-                    startIcon={<AddCircleOutline />}
-                    sx={{ 
-                      ml: 1, 
-                      borderRadius: theme.spacing(2),
-                      textTransform: 'none',
-                      fontWeight: 600 
-                    }}
-                  >
-                    Пополнить через TON
-                  </Button>
-                </Box>
+              </TonConnectPaper>
+            ) : (
+              <Box sx={{ height: '100%' }}>
+                <TonConnectComponent 
+                  onSuccessConnect={handleTonWalletConnected}
+                  onError={handleTonWalletError}
+                />
               </Box>
-            </Paper>
-          ) : (
-            <TonConnectComponent 
-              onSuccessConnect={handleTonWalletConnected}
-              onError={handleTonWalletError}
-            />
-          )}
-        </Box>
-      )}
+            )}
+          </Box>
+        )}
+      </Box>
       
       <StyledTabs
         value={tabValue}
         onChange={handleTabChange}
         centered
         variant="fullWidth"
+        sx={{ mt: 2 }}
       >
-        <Tab label="Все операции" />
-        <Tab label="Пополнения" />
-        <Tab label="Покупки" />
+        <Tab label={isMobile ? "Все" : "Все операции"} />
+        <Tab label={isMobile ? "Пополнения" : "Пополнения"} />
+        <Tab label={isMobile ? "Покупки" : "Покупки"} />
       </StyledTabs>
       
       <TransactionsList>
         {loading ? (
           <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress />
+            <CircularProgress size={isMobile ? 32 : 40} />
           </Box>
         ) : filteredTransactions.length > 0 ? (
           <List disablePadding>
@@ -724,19 +847,20 @@ const WalletPage: React.FC = () => {
                 
                 <ListItemText
                   primary={
-                    <Typography variant="subtitle1" fontWeight={600}>
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: isMobile ? '0.85rem' : '0.95rem' }}>
                       {transaction.description}
                     </Typography>
                   }
                   secondary={
-                    <Typography variant="body2" color="textSecondary">
-                      {format(transaction.date, 'dd MMMM yyyy, HH:mm', { locale: ru })}
+                    <Typography variant="body2" color="textSecondary" sx={{ fontSize: isMobile ? '0.75rem' : '0.8rem' }}>
+                      {format(transaction.date, isMobile ? 'dd.MM.yyyy, HH:mm' : 'dd MMMM yyyy, HH:mm', { locale: ru })}
                     </Typography>
                   }
+                  sx={{ my: 0 }}
                 />
                 
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                  <TransactionAmount variant="subtitle1" className={transaction.type}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: isMobile ? 80 : 100 }}>
+                  <TransactionAmount variant="subtitle2" className={transaction.type} sx={{ fontSize: isMobile ? '0.85rem' : '0.95rem' }}>
                     {transaction.type === 'deposit' ? '+' : '-'}
                     {new Intl.NumberFormat('ru-RU', {
                       style: 'currency',
@@ -755,11 +879,12 @@ const WalletPage: React.FC = () => {
                       transaction.status === 'completed' ? 'success' :
                       transaction.status === 'pending' ? 'info' : 'error'
                     }
+                    icon={getStatusIcon(transaction.status)}
                     sx={{ mt: 0.5 }}
                   />
                 </Box>
                 
-                <KeyboardArrowRight color="action" />
+                {!isMobile && <KeyboardArrowRight color="action" />}
               </TransactionItem>
             ))}
           </List>
@@ -780,7 +905,7 @@ const WalletPage: React.FC = () => {
                 variant="contained"
                 color="primary"
                 startIcon={<AddCircleOutline />}
-                sx={{ mt: 2, borderRadius: 3, textTransform: 'none', fontWeight: 600 }}
+                sx={{ mt: 2, borderRadius: 20, textTransform: 'none', fontWeight: 600 }}
                 onClick={handleOpenTopupDialog}
               >
                 Пополнить баланс
@@ -790,33 +915,35 @@ const WalletPage: React.FC = () => {
         )}
       </TransactionsList>
       
-      {/* Диалог пополнения баланса */}
+      {/* Topup dialog */}
       <TopupDialog
         open={openTopupDialog}
         onClose={handleCloseTopupDialog}
         fullWidth
+        TransitionComponent={SlideTransition}
       >
         <DialogHeader>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6">Пополнение баланса</Typography>
-            <IconButton edge="end" onClick={handleCloseTopupDialog}>
+            <IconButton edge="end" onClick={handleCloseTopupDialog} size={isMobile ? 'small' : 'medium'}>
               <Close />
             </IconButton>
           </Box>
         </DialogHeader>
         
-        <DialogContent sx={{ p: 3 }}>
-          <Typography variant="body1" sx={{ mb: 3 }}>
-            Введите сумму пополнения или выберите из предложенных вариантов:
+        <DialogContent sx={{ p: 2, pt: 1, [theme.breakpoints.up('sm')]: { p: 3, pt: 1 } }}>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            Введите сумму пополнения:
           </Typography>
           
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 3 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 2 }}>
             {quickAmounts.map((amount) => (
               <AmountButton
                 key={amount}
                 onClick={() => setTopupAmount(amount.toString())}
                 variant={topupAmount === amount.toString() ? 'contained' : 'outlined'}
                 color={topupAmount === amount.toString() ? 'primary' : 'inherit'}
+                size={isMobile ? 'small' : 'medium'}
               >
                 {new Intl.NumberFormat('ru-RU', {
                   style: 'currency',
@@ -867,12 +994,13 @@ const WalletPage: React.FC = () => {
           />
         </DialogContent>
         
-        <DialogActions sx={{ p: 3, pt: 0 }}>
+        <DialogActions sx={{ p: 2, pt: 0, [theme.breakpoints.up('sm')]: { p: 3, pt: 0 } }}>
           <Button
             onClick={handleCloseTopupDialog}
             variant="outlined"
             color="inherit"
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+            size={isMobile ? 'small' : 'medium'}
+            sx={{ borderRadius: 20, textTransform: 'none', fontWeight: 600 }}
           >
             Отмена
           </Button>
@@ -881,67 +1009,70 @@ const WalletPage: React.FC = () => {
             variant="contained"
             color="primary"
             disabled={isProcessingPayment || !topupAmount}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-            startIcon={isProcessingPayment ? <CircularProgress size={20} color="inherit" /> : null}
+            size={isMobile ? 'small' : 'medium'}
+            sx={{ borderRadius: 20, textTransform: 'none', fontWeight: 600 }}
+            startIcon={isProcessingPayment ? <CircularProgress size={isMobile ? 16 : 20} color="inherit" /> : null}
           >
             {isProcessingPayment ? 'Обработка...' : 'Пополнить'}
           </Button>
         </DialogActions>
       </TopupDialog>
       
-      {/* Диалог пополнения баланса через TON */}
+      {/* TON topup dialog */}
       <TopupDialog
         open={openTonTopupDialog}
         onClose={handleCloseTonTopupDialog}
         fullWidth
+        TransitionComponent={SlideTransition}
       >
         <DialogHeader>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Пополнение баланса через TON</Typography>
-            <IconButton edge="end" onClick={handleCloseTonTopupDialog}>
+            <Typography variant="h6">Пополнение через TON</Typography>
+            <IconButton edge="end" onClick={handleCloseTonTopupDialog} size={isMobile ? 'small' : 'medium'}>
               <Close />
             </IconButton>
           </Box>
         </DialogHeader>
         
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent sx={{ p: 2, pt: 1, [theme.breakpoints.up('sm')]: { p: 3, pt: 1 } }}>
           <Box sx={{ 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
-            mb: 3 
+            mb: 2 
           }}>
             <Avatar 
               sx={{ 
-                width: 48, 
-                height: 48, 
+                width: 40, 
+                height: 40, 
                 bgcolor: alpha(theme.palette.primary.main, 0.1),
                 color: theme.palette.primary.main,
-                mr: 2
+                mr: 1.5
               }}
             >
               <img 
                 src={tonLogoBase64} 
                 alt="TON" 
-                style={{ width: 28, height: 28 }} 
+                style={{ width: 22, height: 22 }} 
               />
             </Avatar>
-            <Typography variant="h6">
+            <Typography variant="subtitle1" fontWeight={600}>
               Пополнение через TON Wallet
             </Typography>
           </Box>
           
-          <Typography variant="body1" sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ mb: 2 }}>
             Введите сумму в TON или выберите из предложенных вариантов:
           </Typography>
           
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 3 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 2 }}>
             {quickTonAmounts.map((amount) => (
               <AmountButton
                 key={amount}
                 onClick={() => setTonTopupAmount(amount.toString())}
                 variant={tonTopupAmount === amount.toString() ? 'contained' : 'outlined'}
                 color={tonTopupAmount === amount.toString() ? 'primary' : 'inherit'}
+                size={isMobile ? 'small' : 'medium'}
               >
                 {amount} TON
               </AmountButton>
@@ -972,7 +1103,7 @@ const WalletPage: React.FC = () => {
               ),
             }}
             sx={{ 
-              mb: 3,
+              mb: 2,
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2
               }
@@ -981,13 +1112,13 @@ const WalletPage: React.FC = () => {
             helperText={tonPaymentError}
           />
           
-          <Divider sx={{ mb: 3 }} />
+          <Divider sx={{ mb: 2 }} />
           
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <Typography variant="body2" color="text.secondary">
             Примерная сумма в рублях:
           </Typography>
           
-          <Typography variant="h6" sx={{ mb: 3, color: theme.palette.primary.main }}>
+          <Typography variant="h6" sx={{ mb: 2, color: theme.palette.primary.main }}>
             {new Intl.NumberFormat('ru-RU', {
               style: 'currency',
               currency: 'RUB',
@@ -1000,12 +1131,13 @@ const WalletPage: React.FC = () => {
           </Typography>
         </DialogContent>
         
-        <DialogActions sx={{ p: 3, pt: 0 }}>
+        <DialogActions sx={{ p: 2, pt: 0, [theme.breakpoints.up('sm')]: { p: 3, pt: 0 } }}>
           <Button
             onClick={handleCloseTonTopupDialog}
             variant="outlined"
             color="inherit"
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+            size={isMobile ? 'small' : 'medium'}
+            sx={{ borderRadius: 20, textTransform: 'none', fontWeight: 600 }}
           >
             Отмена
           </Button>
@@ -1014,8 +1146,9 @@ const WalletPage: React.FC = () => {
             variant="contained"
             color="primary"
             disabled={isProcessingTonPayment || !tonTopupAmount}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-            startIcon={isProcessingTonPayment ? <CircularProgress size={20} color="inherit" /> : null}
+            size={isMobile ? 'small' : 'medium'}
+            sx={{ borderRadius: 20, textTransform: 'none', fontWeight: 600 }}
+            startIcon={isProcessingTonPayment ? <CircularProgress size={isMobile ? 16 : 20} color="inherit" /> : null}
           >
             {isProcessingTonPayment ? 'Обработка...' : 'Пополнить через TON'}
           </Button>

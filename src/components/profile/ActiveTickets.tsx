@@ -1,34 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, LinearProgress, Button, Skeleton, alpha } from '@mui/material';
+import { Box, Typography, Card, CardContent, LinearProgress, Button, Skeleton, alpha, Paper, Chip, Divider } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import { User, Ticket, Raffle } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { ShoppingBag } from '@mui/icons-material';
+import { ShoppingBag, CalendarMonth, AccessTimeFilled, LocalActivity } from '@mui/icons-material';
 import { getDocs, query, collection, where, orderBy, limit, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
-const StatsCard = styled(Card)(({ theme }) => ({
-  borderRadius: theme.spacing(2),
-  boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+const StatsCard = styled(Paper)(({ theme }) => ({
+  borderRadius: theme.spacing(3),
+  boxShadow: `0 6px 16px ${alpha(theme.palette.common.black, 0.04)}`,
+  padding: theme.spacing(0.5),
   height: '100%',
-  transition: 'transform 0.2s ease',
+  transition: 'all 0.3s ease',
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+  overflow: 'hidden',
   '&:hover': {
-    transform: 'translateY(-5px)',
+    transform: 'translateY(-4px)',
+    boxShadow: `0 10px 30px ${alpha(theme.palette.common.black, 0.08)}`,
+    borderColor: alpha(theme.palette.primary.main, 0.15),
   },
 }));
 
-const EmptyCard = styled(Card)(({ theme }) => ({
-  borderRadius: theme.spacing(2),
-  boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
-  padding: theme.spacing(4),
+const CardContentStyled = styled(CardContent)(({ theme }) => ({
+  padding: theme.spacing(2.5),
+  '&:last-child': {
+    paddingBottom: theme.spacing(2.5)
+  },
+}));
+
+const EmptyCard = styled(Paper)(({ theme }) => ({
+  borderRadius: theme.spacing(3),
+  boxShadow: `0 6px 16px ${alpha(theme.palette.common.black, 0.04)}`,
+  padding: theme.spacing(6, 3),
   textAlign: 'center',
   marginBottom: theme.spacing(2),
-  backgroundColor: alpha(theme.palette.primary.main, 0.05),
-  border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+  backgroundColor: alpha(theme.palette.background.paper, 0.6),
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+}));
+
+const TicketNumberChip = styled(Chip)(({ theme }) => ({
+  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+  color: theme.palette.primary.main,
+  fontWeight: 600,
+  borderRadius: theme.spacing(1),
+  '& .MuiChip-icon': {
+    color: theme.palette.primary.main,
+  },
+}));
+
+const ProgressBarContainer = styled(Box)(({ theme }) => ({
+  width: '100%',
+  marginBottom: theme.spacing(0.8),
+  marginTop: theme.spacing(1.5),
 }));
 
 interface ActiveTicketsProps {
@@ -117,14 +145,14 @@ const ActiveTickets: React.FC<ActiveTicketsProps> = ({ userId }) => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
         {[1, 2, 3].map((item) => (
           <Skeleton 
             key={item} 
             variant="rectangular" 
             width="100%" 
-            height={120} 
-            sx={{ borderRadius: 2 }} 
+            height={140} 
+            sx={{ borderRadius: 3 }} 
           />
         ))}
       </Box>
@@ -133,7 +161,7 @@ const ActiveTickets: React.FC<ActiveTicketsProps> = ({ userId }) => {
 
   if (!activeTickets || activeTickets.length === 0) {
     return (
-      <EmptyCard>
+      <EmptyCard elevation={0}>
         <Box 
           sx={{ 
             display: 'flex', 
@@ -143,24 +171,24 @@ const ActiveTickets: React.FC<ActiveTicketsProps> = ({ userId }) => {
         >
           <Box 
             sx={{ 
-              width: 80, 
-              height: 80, 
+              width: 90, 
+              height: 90, 
               borderRadius: '50%', 
-              backgroundColor: alpha('#2196F3', 0.1), 
+              backgroundColor: alpha('#2196F3', 0.08), 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              mb: 2, 
+              mb: 3, 
             }}
           >
-            <ShoppingBag sx={{ fontSize: 40, color: 'primary.main' }} />
+            <ShoppingBag sx={{ fontSize: 45, color: 'primary.main' }} />
           </Box>
           
-          <Typography variant="h6" sx={{ mb: 1 }}>
+          <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600 }}>
             У вас пока нет активных билетов
           </Typography>
           
-          <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+          <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary', maxWidth: 360, mx: 'auto' }}>
             Примите участие в розыгрышах, чтобы билеты появились здесь
           </Typography>
           
@@ -170,8 +198,13 @@ const ActiveTickets: React.FC<ActiveTicketsProps> = ({ userId }) => {
             variant="contained" 
             color="primary"
             sx={{ 
-              borderRadius: 20,
-              px: 3
+              borderRadius: 6,
+              px: 4,
+              py: 1.2,
+              fontSize: '1rem',
+              fontWeight: 500,
+              textTransform: 'none',
+              boxShadow: '0 8px 20px rgba(33, 150, 243, 0.2)'
             }}
           >
             Смотреть розыгрыши
@@ -182,58 +215,73 @@ const ActiveTickets: React.FC<ActiveTicketsProps> = ({ userId }) => {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
       {activeTickets.map((ticket) => (
         <Box key={ticket.id}>
           <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
           >
-            <StatsCard>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            <StatsCard elevation={0}>
+              <CardContentStyled>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, alignItems: 'flex-start' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
                     {ticket.title}
                   </Typography>
-                  <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                    {ticket.ticketNumbers.length > 1 
+                  
+                  <TicketNumberChip 
+                    icon={<LocalActivity fontSize="small" />}
+                    label={ticket.ticketNumbers.length > 1 
                       ? `${ticket.ticketNumbers.length} билетов` 
                       : `Билет ${ticket.ticketNumbers[0]}`}
+                    size="small"
+                  />
+                </Box>
+                
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <CalendarMonth sx={{ fontSize: 18, color: 'text.secondary', mr: 0.8 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Розыгрыш: {ticket.drawDate}
                   </Typography>
                 </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Розыгрыш: {ticket.drawDate}
-                </Typography>
-                <Box sx={{ width: '100%', mb: 1 }}>
+                
+                <ProgressBarContainer>
                   <LinearProgress 
                     variant="determinate" 
                     value={ticket.progress} 
                     sx={{ 
-                      height: 6, 
+                      height: 8, 
                       borderRadius: 5,
-                      backgroundColor: 'rgba(33, 150, 243, 0.2)',
+                      backgroundColor: 'rgba(33, 150, 243, 0.15)',
                       '& .MuiLinearProgress-bar': {
                         borderRadius: 5,
                         background: 'linear-gradient(90deg, #2196F3 0%, #1976D2 100%)',
                       }
                     }}
                   />
-                </Box>
+                </ProgressBarContainer>
+                
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="body2" fontWeight={500} color="primary.main">
                     Заполнено {ticket.progress}%
                   </Typography>
                   <Button 
-                    size="small" 
-                    color="primary" 
-                    sx={{ borderRadius: 20, textTransform: 'none' }}
+                    size="medium" 
+                    color="primary"
+                    variant="outlined"
+                    sx={{ 
+                      borderRadius: 6, 
+                      textTransform: 'none',
+                      px: 2.5,
+                      borderColor: alpha('#2196F3', 0.3)
+                    }}
                     onClick={() => navigate(`/raffles/${ticket.raffleId}`)}
                   >
                     Подробнее
                   </Button>
                 </Box>
-              </CardContent>
+              </CardContentStyled>
             </StatsCard>
           </motion.div>
         </Box>

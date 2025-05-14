@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, alpha, useTheme } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { styled } from '@mui/material/styles';
@@ -16,15 +16,25 @@ const TabPanelContainer = styled(motion.div)(({ theme }) => ({
 
 const ModernTabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
   const theme = useTheme();
+  const [isVisible, setIsVisible] = useState(false);
+  
+  // Handle initial visibility
+  useEffect(() => {
+    if (value === index) {
+      setIsVisible(true);
+    }
+  }, [value, index]);
   
   const variants = {
     hidden: { 
       opacity: 0,
       y: 10,
+      display: 'none',
     },
     visible: { 
       opacity: 1,
       y: 0,
+      display: 'block',
       transition: {
         duration: 0.4,
         ease: [0.2, 0.8, 0.2, 1],
@@ -32,27 +42,21 @@ const ModernTabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...ot
     }
   };
 
+  // Always render the content but control visibility with CSS
   return (
     <div
       role="tabpanel"
-      hidden={value !== index}
       id={`profile-tabpanel-${index}`}
       aria-labelledby={`profile-tab-${index}`}
       {...other}
     >
-      <AnimatePresence mode="wait">
-        {value === index && (
-          <TabPanelContainer
-            key={`panel-${index}`}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            variants={variants}
-          >
-            {children}
-          </TabPanelContainer>
-        )}
-      </AnimatePresence>
+      <motion.div
+        initial={false}
+        animate={value === index ? "visible" : "hidden"}
+        variants={variants}
+      >
+        {children}
+      </motion.div>
     </div>
   );
 };

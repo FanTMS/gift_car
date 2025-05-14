@@ -9,7 +9,8 @@ import {
   Fade,
   Button,
   CircularProgress,
-  Alert
+  Alert,
+  Paper
 } from '@mui/material';
 import { 
   CardGiftcard, 
@@ -40,10 +41,10 @@ const tonLogoBase64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0
 
 // Styled components for the page
 const PageContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
+  paddingTop: theme.spacing(3),
   paddingBottom: theme.spacing(10),
   [theme.breakpoints.down('sm')]: {
-    padding: theme.spacing(1, 2, 8),
+    padding: theme.spacing(2, 2, 8),
   }
 }));
 
@@ -53,41 +54,56 @@ const ContentContainer = styled(motion.div)(({ theme }) => ({
   width: '100%',
   maxWidth: '100%',
   margin: '0 auto',
+  gap: theme.spacing(3),
   [theme.breakpoints.up('md')]: {
-    maxWidth: '800px',
+    maxWidth: '840px',
   },
 }));
 
-const ErrorMessage = styled(Box)(({ theme }) => ({
+const ErrorMessage = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   textAlign: 'center',
-  borderRadius: theme.spacing(2),
-  backgroundColor: alpha(theme.palette.error.main, 0.1),
+  borderRadius: theme.spacing(3),
+  backgroundColor: alpha(theme.palette.error.light, 0.1),
   color: theme.palette.error.main,
   marginTop: theme.spacing(2),
+  border: `1px solid ${alpha(theme.palette.error.main, 0.12)}`,
 }));
 
-const LoginContainer = styled(Box)(({ theme }) => ({
+const LoginContainer = styled(Paper)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  padding: theme.spacing(4),
+  padding: theme.spacing(5),
   marginTop: theme.spacing(4),
-  backgroundColor: alpha(theme.palette.background.paper, 0.7),
-  borderRadius: theme.shape.borderRadius * 2,
+  backgroundColor: alpha(theme.palette.background.paper, 0.8),
+  borderRadius: theme.spacing(3),
   backdropFilter: 'blur(10px)',
-  boxShadow: theme.shadows[3],
+  boxShadow: `0 10px 40px ${alpha(theme.palette.common.black, 0.08)}`,
   textAlign: 'center',
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
 }));
 
-const TonWalletSection = styled(Box)(({ theme }) => ({
-  marginTop: theme.spacing(3),
-  marginBottom: theme.spacing(3),
+const TonWalletSection = styled(Paper)(({ theme }) => ({
+  marginTop: theme.spacing(1),
+  marginBottom: theme.spacing(1),
   padding: theme.spacing(3),
-  borderRadius: theme.spacing(2),
-  backgroundColor: alpha(theme.palette.primary.main, 0.05),
-  border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+  borderRadius: theme.spacing(3),
+  backgroundColor: alpha(theme.palette.primary.main, 0.04),
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+  boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.03)}`,
+  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: `0 6px 24px ${alpha(theme.palette.common.black, 0.06)}`,
+  },
+}));
+
+const TabContentContainer = styled(Box)(({ theme }) => ({
+  minHeight: 300,
+  borderRadius: theme.spacing(3),
+  transition: 'opacity 0.3s ease',
 }));
 
 // Функция для определения, запущено ли приложение в Telegram Mini App
@@ -120,6 +136,12 @@ const ProfilePage: React.FC = () => {
   const [tonWalletError, setTonWalletError] = useState<string | null>(null);
   const theme = useTheme();
   const isMobile = useIsMobile();
+
+  // Ensure the Active Tickets tab is rendered properly on initial load
+  useEffect(() => {
+    // Force re-render of tabs to ensure proper display
+    setTabValue(0);
+  }, []);
 
   useEffect(() => {
     // Проверяем, запущено ли приложение в Telegram
@@ -245,8 +267,8 @@ const ProfilePage: React.FC = () => {
     animate: { 
       opacity: 1,
       transition: { 
-        duration: 0.5,
-        staggerChildren: 0.1 
+        duration: 0.6,
+        staggerChildren: 0.15 
       }
     }
   };
@@ -256,7 +278,7 @@ const ProfilePage: React.FC = () => {
     animate: { 
       opacity: 1, 
       y: 0,
-      transition: { duration: 0.4 }
+      transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1.0] }
     }
   };
 
@@ -270,16 +292,31 @@ const ProfilePage: React.FC = () => {
           variants={pageVariants}
         >
           <motion.div variants={itemVariants}>
-            <LoginContainer>
-              <Typography variant="h5" gutterBottom>
+            <LoginContainer elevation={0}>
+              <Box 
+                sx={{ 
+                  width: 80, 
+                  height: 80, 
+                  borderRadius: '50%', 
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1), 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  mb: 3,
+                }}
+              >
+                <Person sx={{ fontSize: 40, color: 'primary.main' }} />
+              </Box>
+              
+              <Typography variant="h5" gutterBottom fontWeight={600}>
                 Необходимо войти в профиль
               </Typography>
-              <Typography variant="body1" color="textSecondary" paragraph>
+              <Typography variant="body1" color="text.secondary" paragraph>
                 Для доступа к профилю и участия в розыгрышах, пожалуйста, выполните вход
               </Typography>
               
               {loginError && (
-                <Alert severity="error" sx={{ mb: 2, width: '100%' }}>
+                <Alert severity="error" sx={{ mb: 2, width: '100%', borderRadius: 2 }}>
                   {loginError}
                 </Alert>
               )}
@@ -291,13 +328,22 @@ const ProfilePage: React.FC = () => {
                 startIcon={loginLoading ? <CircularProgress size={20} color="inherit" /> : <Login />}
                 onClick={handleAnonymousLogin}
                 disabled={loginLoading}
-                sx={{ mt: 2 }}
+                sx={{ 
+                  mt: 2, 
+                  borderRadius: 6, 
+                  px: 4, 
+                  py: 1.2,
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                  boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.3)}`
+                }}
               >
                 {loginLoading ? 'Вход...' : 'Войти как гость'}
               </Button>
               
               {isTelegram && (
-                <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
                   Если вы открыли это приложение в Telegram, авторизация должна произойти автоматически
                 </Typography>
               )}
@@ -311,8 +357,11 @@ const ProfilePage: React.FC = () => {
   if (loading) {
     return (
       <PageContainer>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-          <CircularProgress />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', flexDirection: 'column', gap: 2 }}>
+          <CircularProgress size={50} thickness={4} />
+          <Typography variant="body1" color="text.secondary">
+            Загрузка профиля...
+          </Typography>
         </Box>
       </PageContainer>
     );
@@ -321,14 +370,14 @@ const ProfilePage: React.FC = () => {
   if (error) {
     return (
       <PageContainer>
-        <ErrorMessage>
-          <Typography variant="h6" gutterBottom>Ошибка</Typography>
+        <ErrorMessage elevation={0}>
+          <Typography variant="h6" gutterBottom fontWeight={600}>Ошибка</Typography>
           <Typography>{error}</Typography>
           <Button 
             variant="outlined" 
             color="error" 
             onClick={refreshProfile}
-            sx={{ mt: 2 }}
+            sx={{ mt: 3, borderRadius: 6, px: 3, textTransform: 'none' }}
           >
             Попробовать снова
           </Button>
@@ -339,7 +388,7 @@ const ProfilePage: React.FC = () => {
 
   return (
     <PageContainer>
-      <Fade in={!loading}>
+      <Fade in={!loading} timeout={500}>
         <ContentContainer
           initial="initial"
           animate="animate"
@@ -356,27 +405,36 @@ const ProfilePage: React.FC = () => {
           {/* Секция для TON кошелька только если это Telegram Mini App */}
           {isTelegram && (
             <motion.div variants={itemVariants}>
-              <TonWalletSection>
-                <Typography variant="h6" gutterBottom>
+              <TonWalletSection elevation={0}>
+                <Typography variant="h6" gutterBottom fontWeight={600}>
                   TON Кошелек
                 </Typography>
                 
                 {tonWalletConnected && tonWalletAddress ? (
                   <Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                       <Box
                         component="img"
                         src={tonLogoBase64}
                         alt="TON"
-                        sx={{ width: 24, height: 24, mr: 1 }}
+                        sx={{ width: 28, height: 28, mr: 1.5 }}
                       />
-                      <Typography variant="subtitle1" fontWeight={600}>
+                      <Typography variant="subtitle1" fontWeight={600} color="primary.main">
                         Кошелек подключен
                       </Typography>
                     </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Адрес: {tonWalletAddress.slice(0, 8)}...{tonWalletAddress.slice(-8)}
-                    </Typography>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      backgroundColor: alpha(theme.palette.background.default, 0.7), 
+                      borderRadius: 3,
+                      p: 1.5,
+                      border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                    }}>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500, color: 'text.primary' }}>
+                        {tonWalletAddress.slice(0, 12)}...{tonWalletAddress.slice(-8)}
+                      </Typography>
+                    </Box>
                   </Box>
                 ) : (
                   <TonConnectComponent
@@ -392,18 +450,23 @@ const ProfilePage: React.FC = () => {
             <ModernTabs tabs={tabs} value={tabValue} onChange={handleTabChange} />
           </motion.div>
           
-          <motion.div variants={itemVariants} style={{ minHeight: 300 }}>
-            <ModernTabPanel value={tabValue} index={0}>
-              <ActiveTickets userId={user?.uid} />
-            </ModernTabPanel>
-            
-            <ModernTabPanel value={tabValue} index={1}>
-              <TicketHistory userId={user?.uid} />
-            </ModernTabPanel>
-            
-            <ModernTabPanel value={tabValue} index={2}>
-              <ModernProfileInfo profile={profile} loading={loading} />
-            </ModernTabPanel>
+          <motion.div 
+            variants={itemVariants} 
+            key={`tabcontent-${tabValue}`}
+          >
+            <TabContentContainer>
+              <ModernTabPanel value={tabValue} index={0}>
+                <ActiveTickets userId={user?.uid} />
+              </ModernTabPanel>
+              
+              <ModernTabPanel value={tabValue} index={1}>
+                <TicketHistory userId={user?.uid} />
+              </ModernTabPanel>
+              
+              <ModernTabPanel value={tabValue} index={2}>
+                <ModernProfileInfo profile={profile} loading={loading} />
+              </ModernTabPanel>
+            </TabContentContainer>
           </motion.div>
           
           <EditProfileForm 
